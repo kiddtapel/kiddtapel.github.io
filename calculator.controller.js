@@ -14,7 +14,7 @@ angular.module('calcApp', [])
             kills: 0,
             score: 0
         }];
-        calculator.recompute = function (index) {
+        calculator.recompute = function (index, field) {
             let kills = calculator.areas[index].kills, clearTime = calculator.areas[index].clearTime;
             score = 0;
             if (kills === 0 && index === 0) {
@@ -28,6 +28,7 @@ angular.module('calcApp', [])
             } else score = Math.round(3600 - (clearTime * 10.5));
 
             calculator.areas[index].score = score;
+            ga('send', 'event', 'Recompute Area ' + (index + 1), 'compute', field);
         };
 
         calculator.recomputeByScore = function (index) {
@@ -60,6 +61,7 @@ angular.module('calcApp', [])
                 }
             }
             calculator.areas[index] = area;
+            ga('send', 'event', 'Recompute Area ' + (index + 1), 'compute', 'Score');
         };
 
         calculator.total = function () {

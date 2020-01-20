@@ -36,11 +36,11 @@
             <form>
                 <div class="form-group">
                     <label for="clearTime-{{$index}}">Clear Time</label>
-                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-blur="calculator.recompute($index)">
+                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-blur="calculator.recompute($index, 'Clear Time')">
                 </div>
                 <div class="form-group">
                     <label for="kills-{{$index}}">Kills</label>
-                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-blur="calculator.recompute($index)">
+                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-blur="calculator.recompute($index, 'Kill')">
                 </div>
             </form>
         </div>
