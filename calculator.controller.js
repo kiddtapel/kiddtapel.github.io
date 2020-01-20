@@ -25,7 +25,7 @@ angular.module('calcApp', [])
                 score = 780;
             } else if (kills === 2) {
                 score = 1560;
-            } else score = Math.round(3600 - ((120 - clearTime) * 10.5));
+            } else score = Math.round(3600 - (clearTime * 10.5));
 
             calculator.areas[index].score = score;
         };
