@@ -1,5 +1,6 @@
 angular.module('calcApp', [])
-    .controller('CalculatorController', function () {
+    .constant("moment", moment)
+    .controller('CalculatorController', function (moment) {
         var calculator = this;
         calculator.areas = [{
             clearTime: 60,
@@ -29,6 +30,10 @@ angular.module('calcApp', [])
 
             calculator.areas[index].score = score;
             ga('send', 'event', 'Recompute Area ' + (index + 1), 'compute', field);
+        };
+
+        calculator.remainingTime = function(clearTime) {
+            return moment((120 - clearTime) * 1000).format('mm:ss')
         };
 
         calculator.recomputeByScore = function (index) {

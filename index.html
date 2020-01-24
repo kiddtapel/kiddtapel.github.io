@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="calculator.controller.js"></script>
 </head>
 <body>
@@ -37,6 +38,7 @@
                 <div class="form-group">
                     <label for="clearTime-{{$index}}">Clear Time in seconds</label>
                     <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-blur="calculator.recompute($index, 'Clear Time')">
+                    <small class="form-text text-muted">{{calculator.remainingTime(area.clearTime)}} left on the clock</small>
                 </div>
                 <div class="form-group">
                     <label for="kills-{{$index}}">Kills</label>
