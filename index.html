@@ -51,7 +51,9 @@
     </div>
     <div class="row" ng-repeat="area in calculator.areas">
         <div class="col-100">
-            <h4>Area {{$index + 1}}</h4>
+            <h4>Area {{$index + 1}}
+            <button type="button" class="btn btn-success btn-sm" ng-show="area.kills !== 0" ng-click="area.kills = 0; calculator.recompute($index, 'Clear Button')">Cleared</button>
+            <button type="button" class="btn btn-danger btn-sm" ng-show="area.kills === 0" ng-click="area.kills = 3; calculator.recompute($index, 'Add Button')">Failed</button></h4>
         </div>
         <div class="col-sm">
             <form>
