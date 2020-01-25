@@ -1,6 +1,6 @@
-angular.module('calcApp', [])
+angular.module('calcApp', ['ngClipboard'])
     .constant("moment", moment)
-    .controller('CalculatorController', function (moment) {
+    .controller('CalculatorController', function (moment,ngClipboard) {
         var calculator = this;
         calculator.areas = [{
             clearTime: 0,
@@ -122,34 +122,25 @@ angular.module('calcApp', [])
         };
 
         calculator.copyInstructions = function() {
-            const el = document.createElement('textarea');
             var str = "";
 
             let ended = false;
             calculator.areas.forEach(function(area, i) {
                 if (ended) return;
                 if (area.kills === 3) {
-                    str += `A${i+1}: ${calculator.remainingTime(area.clearTime)} on the clock\n`;
+                    str += `A${i+1} ${calculator.remainingTime(area.clearTime)} \n`;
                 } else if (area.kills > 0) {
                     ended = true;
-                    str += `A${i+1}: ${area.kills} kill${area.kills === 1? '':'s'}\n`;
+                    str += `A${i+1} ${area.kills} kill${area.kills === 1? '':'s'} \n`;
                 } else {
                     ended = true;
-                    str += `A${i+1}: Quit Battle\n`;
+                    str += `A${i+1} Quit Battle \n`;
                 }
             });
 
-            str += `Total score: ${calculator.total()}`;
+            str += `Score: ${calculator.total()}`;
 
             console.log(str);
-
-            el.value = str;
-            el.setAttribute('readonly', '');
-            el.style.position = 'absolute';
-            el.style.left = '-9999px';
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
+            ngClipboard.toClipboard(str);
         };
     });
