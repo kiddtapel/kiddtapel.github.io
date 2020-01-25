@@ -22,10 +22,11 @@
 </head>
 <body>
 
-<div class="container" ng-controller="CalculatorController as calculator">
+<div class="container-fluid" ng-controller="CalculatorController as calculator">
     <div class="row">
         <div class="col-sm">
             <h1>Elchronicle Suikoden War Calculator</h1>
+            <h2 style="position: fixed;right: 0px;bottom:0px;background: white;z-index: 9999;width: 100%;padding: 10px;">Total Score: {{calculator.total()}}</h2>
         </div>
     </div>
 
@@ -82,11 +83,7 @@
             </form>
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm">
-            <h2>Total Score: {{calculator.total()}}</h2>
-        </div>
-    </div>
+    <div style="margin-bottom: 38px">&nbsp;</div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"

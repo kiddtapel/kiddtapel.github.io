@@ -3,17 +3,17 @@ angular.module('calcApp', [])
     .controller('CalculatorController', function (moment) {
         var calculator = this;
         calculator.areas = [{
-            clearTime: 15,
+            clearTime: 0,
             kills: 3,
-            score: 3443
+            score: 3600
         }, {
             clearTime: 0,
-            kills: 0,
-            score: 0
+            kills: 3,
+            score: 3600
         }, {
             clearTime: 0,
-            kills: 0,
-            score: 0
+            kills: 3,
+            score: 3600
         }];
         calculator.tier = "1";
         let maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
