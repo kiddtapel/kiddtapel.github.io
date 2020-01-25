@@ -16,17 +16,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
     <script src="calculator.controller.js"></script>
 </head>
 <body>
 
-<div class="container-fluid" ng-controller="CalculatorController as calculator">
+<div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>
     <div class="row">
         <div class="col-sm">
             <h1>Elchronicle Suikoden War Calculator</h1>
-            <h2 style="position: fixed;right: 0px;bottom:0px;background: white;z-index: 9999;width: 100%;padding: 10px;">Total Score: {{calculator.total()}}</h2>
+            <h2 style="position: fixed;right: 0px;bottom:0px;background: white;z-index: 9999;width: 100%;padding: 10px;">Total Score: {{calculator.total()}} <button type="button" class="btn btn-default btn-sm" ng-click="calculator.copyInstructions()"><i class="material-icons">content_copy</i></button></h2>
         </div>
     </div>
 
