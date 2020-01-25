@@ -128,13 +128,13 @@ angular.module('calcApp', ['ngClipboard'])
             calculator.areas.forEach(function(area, i) {
                 if (ended) return;
                 if (area.kills === 3) {
-                    str += `A${i+1} ${calculator.remainingTime(area.clearTime)} \n`;
+                    str += `A${i+1} ${calculator.remainingTime(area.clearTime)}                                                `;
                 } else if (area.kills > 0) {
                     ended = true;
-                    str += `A${i+1} ${area.kills} kill${area.kills === 1? '':'s'} \n`;
+                    str += `A${i+1} ${area.kills} kill${area.kills === 1? '':'s'}                                                `;
                 } else {
                     ended = true;
-                    str += `A${i+1} Quit Battle \n`;
+                    str += `A${i+1} Quit Battle                                                `;
                 }
             });
 
