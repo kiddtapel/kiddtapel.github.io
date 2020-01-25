@@ -29,6 +29,26 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col-sm">
+            <form>
+                <div class="form-group">
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" id="customRadioInline1" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="1">
+                        <label class="custom-control-label" for="customRadioInline1">F1 and F2</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" id="customRadioInline2" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="2">
+                        <label class="custom-control-label" for="customRadioInline2">F3 and F4</label>
+                    </div>
+                    <div class="custom-control custom-radio custom-control-inline">
+                        <input type="radio" id="customRadioInline3" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="3">
+                        <label class="custom-control-label" for="customRadioInline3">F5 to F8</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
     <div class="row" ng-repeat="area in calculator.areas">
         <div class="col-100">
             <h4>Area {{$index + 1}}</h4>
@@ -37,12 +57,17 @@
             <form>
                 <div class="form-group">
                     <label for="clearTime-{{$index}}">Clear Time in seconds</label>
-                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-blur="calculator.recompute($index, 'Clear Time')">
+                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-change="calculator.recompute($index, 'Clear Time')">
+                    <input type="range" class="custom-range" min="0" max="120" ng-model="area.clearTime" ng-change="calculator.adjustRelatively($index, 'Clear Time', {{area.clearTime}})">
                     <small class="form-text text-muted">{{calculator.remainingTime(area.clearTime)}} left on the clock</small>
                 </div>
+            </form>
+        </div>
+        <div class="col-sm">
+            <form>
                 <div class="form-group">
                     <label for="kills-{{$index}}">Kills</label>
-                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-blur="calculator.recompute($index, 'Kill')">
+                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-change="calculator.recompute($index, 'Kill')">
                 </div>
             </form>
         </div>
@@ -50,7 +75,7 @@
             <form>
                 <div class="form-group">
                     <label for="score-{{$index}}">Estimated Score</label>
-                    <input type="number" class="form-control" id="score-{{$index}}" ng-model="area.score" ng-blur="calculator.recomputeByScore($index)">
+                    <input type="number" class="form-control" id="score-{{$index}}" ng-model="area.score" ng-change="calculator.recomputeByScore($index, false)" ng-blur="calculator.recomputeByScore($index, true)">
                 </div>
             </form>
         </div>
