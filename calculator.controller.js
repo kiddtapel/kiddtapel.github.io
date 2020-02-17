@@ -65,7 +65,7 @@ angular.module('calcApp', ['ngClipboard'])
         };
 
         calculator.remainingTime = function (clearTime) {
-            return moment((120 - clearTime) * 1000).format('mm:ss')
+            return moment().startOf('day').add(2, 'minutes').subtract(clearTime, 'seconds').format('mm:ss')
         };
 
         calculator.changeTier = function () {
@@ -128,17 +128,17 @@ angular.module('calcApp', ['ngClipboard'])
             calculator.areas.forEach(function(area, i) {
                 if (ended) return;
                 if (area.kills === 3) {
-                    str += `A${i+1} ${calculator.remainingTime(area.clearTime)}                                                `;
+                    str += `\`\`\`A${i+1} ${calculator.remainingTime(area.clearTime)} time left.\`\`\``;
                 } else if (area.kills > 0) {
                     ended = true;
-                    str += `A${i+1} ${area.kills} kill${area.kills === 1? '':'s'}                                                `;
+                    str += `\`\`\`A${i+1} ${area.kills} kill${area.kills === 1? '':'s'} time left.\`\`\``;
                 } else {
                     ended = true;
-                    str += `A${i+1} Quit Battle                                                `;
+                    str += `\`\`\`A${i+1} Quit Battle.\`\`\``;
                 }
             });
 
-            str += `Score: ${calculator.total()}`;
+            str += `*Score: ${calculator.total()}*`;
 
             console.log(str);
             ngClipboard.toClipboard(str);
