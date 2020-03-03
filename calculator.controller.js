@@ -15,11 +15,171 @@ angular.module('calcApp', ['ngClipboard'])
             kills: 3,
             score: 3600
         }];
+
+        var esdeathTime = 95;
+        var minTimeLeft = 0;
+        var maxTimeLeft = 120;
+        var powerOverwhelming = 85;
+        var fastTime = 70;
+        var averageTime = 50;
+
+        var cases = [{
+            title: "Esdeath Level",
+            min: esdeathTime,
+            max: maxTimeLeft,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "Power Overwhelming",
+            min: powerOverwhelming,
+            max: esdeathTime,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "Fast Full Clear",
+            min: fastTime,
+            max: powerOverwhelming,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "Average Full Clear",
+            min: averageTime,
+            max: fastTime,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "Dragged Full Clear",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "Fast 2 Clears and 2 Kills",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 2,
+            killsInUncleared: 2
+        },{
+            title: "Average 2 Clears and 2 Kills",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 2,
+            killsInUncleared: 2
+        },{
+            title: "Dragged 2 Clears and 2 Kills",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 2,
+            killsInUncleared: 2
+        },{
+            title: "Fast 2 Clears and 1 Kill",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 2,
+            killsInUncleared: 1
+        },{
+            title: "Average 2 Clears and 1 Kills",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 2,
+            killsInUncleared: 1
+        },{
+            title: "Dragged 2 Clears and 1 Kill",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 2,
+            killsInUncleared: 1
+        },{
+            title: "Fast 2 Clears",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 2,
+            killsInUncleared: 0
+        },{
+            title: "Average 2 Clears",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 2,
+            killsInUncleared: 0
+        },{
+            title: "Dragged 2 Clears",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 2,
+            killsInUncleared: 0
+        },{
+            title: "Fast 1 Clear and 2 Kills",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 1,
+            killsInUncleared: 2
+        },{
+            title: "Average 1 Clear and 2 Kills",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 1,
+            killsInUncleared: 2
+        },{
+            title: "Dragged 1 Clear and 2 Kills",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 1,
+            killsInUncleared: 2
+        },{
+            title: "Fast 1 Clear and 1 Kill",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 1,
+            killsInUncleared: 1
+        },{
+            title: "Average 1 Clear and 1 Kills",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 1,
+            killsInUncleared: 1
+        },{
+            title: "Dragged 1 Clear and 1 Kill",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 1,
+            killsInUncleared: 1
+        },{
+            title: "Fast 1 Clear",
+            min: powerOverwhelming,
+            max: maxTimeLeft,
+            clearedAreas: 1,
+            killsInUncleared: 0
+        },{
+            title: "Average 1 Clear",
+            min: averageTime,
+            max: powerOverwhelming,
+            clearedAreas: 1,
+            killsInUncleared: 0
+        },{
+            title: "Dragged 1 Clear",
+            min: minTimeLeft,
+            max: averageTime,
+            clearedAreas: 1,
+            killsInUncleared: 0
+        }, {
+            title: "2 Kills",
+            min: 0,
+            max: 0,
+            clearedAreas: 0,
+            killsInUncleared: 2
+        }, {
+            title: "1 Kill",
+            min: 0,
+            max: 0,
+            clearedAreas: 0,
+            killsInUncleared: 1
+        }];
+
         calculator.tier = "1";
-        let maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
+        var maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
         calculator.recompute = function (index, field) {
             console.log('recompute', 'index =', index, 'field =', field);
-            let kills = calculator.areas[index].kills, clearTime = calculator.areas[index].clearTime;
+            var kills = calculator.areas[index].kills, clearTime = calculator.areas[index].clearTime;
             score = 0;
             if (kills === 0 && index === 0) {
                 score = 50;
@@ -38,8 +198,8 @@ angular.module('calcApp', ['ngClipboard'])
         calculator.adjustRelatively = function (index, field, oldValue) {
             console.log('adjustRelatively', 'index =', index, 'field =', field, 'oldValue =', oldValue);
             oldValue = parseInt(oldValue);
-            let change = calculator.areas[index].clearTime - oldValue;
-            let relativeChanges = [];
+            var change = calculator.areas[index].clearTime - oldValue;
+            var relativeChanges = [];
             if (calculator.areas[index].kills !== 3) return;
             for (var i = index; i < 3; i++) {
                 if (index !== i) {
@@ -49,7 +209,7 @@ angular.module('calcApp', ['ngClipboard'])
                 }
             }
             relativeChanges.forEach(function(c, i) {
-                let halfChange = relativeChanges.length > 1 && i === 0 ? Math[oldValue % 2 === 0? 'ceil' : 'floor'](change/2) : change;
+                var halfChange = relativeChanges.length > 1 && i === 0 ? Math[oldValue % 2 === 0? 'ceil' : 'floor'](change/2) : change;
                 if (calculator.areas[c].clearTime - halfChange >= 0 && calculator.areas[c].clearTime - halfChange <= 120) {
                     console.log('setting', c, -halfChange);
                     calculator.areas[c].clearTime -= halfChange;
@@ -90,7 +250,7 @@ angular.module('calcApp', ['ngClipboard'])
 
         calculator.recomputeByScore = function (index, onBlur) {
             console.log('recomputeByScore', 'index =', index, 'onBlur =', onBlur);
-            let score = calculator.areas[index].score;
+            var score = calculator.areas[index].score;
             if (score < killScore && onBlur) {
                 calculator.areas[index].clearTime = 0;
                 calculator.areas[index].kills = 0;
@@ -111,8 +271,78 @@ angular.module('calcApp', ['ngClipboard'])
             ga('send', 'event', 'Recompute Area ' + (index + 1), 'compute', 'Score');
         };
 
+        calculator.computeByScore = function (score) {
+            var area = {
+                clearTime: 0,
+                kills: 3,
+                score: 3600
+            };
+            if (score < killScore && onBlur) {
+                area.clearTime = 0;
+                area.kills = 0;
+                area.score = index > 0 ? 0 : 50;
+            } else if (score < killScore * 2 && onBlur) {
+                area.clearTime = 0;
+                area.kills = 1;
+                area.score = killScore;
+            } else if (score < killScore * 3 && onBlur) {
+                area.clearTime = 0;
+                area.kills = 2;
+                area.score = killScore * 2;
+            } else if (score >= killScore * 3 && score <= maxAreaScore) {
+                area.clearTime = Math.ceil((maxAreaScore - score) / scorePerSecond);
+                area.kills = 3;
+                area.score = score;
+            }
+            return area;
+        };
+
+        calculator.getAdviceByScore = function(targetScore){
+            calculator.recommendations = [];
+
+            cases.forEach(function(e){
+                var minScore = calculator.getBoundary(e.clearedAreas, e.min, e.killsInUncleared);
+                var maxScore = calculator.getBoundary(e.clearedAreas, e.max, e.killsInUncleared);
+                console.log(targetScore, minScore, maxScore, targetScore > minScore && targetScore <= maxScore);
+                if (targetScore > minScore && targetScore <= maxScore) e.show = true;
+                else e.show = false;
+            });
+            return cases;
+        };
+
+        calculator.getBoundary = function(numberOfAreasCleared, timeLeft, killsInAreaUncleared) {
+            return (killScore * 3 + (scorePerSecond * (timeLeft))) * numberOfAreasCleared + ((killsInAreaUncleared || 0) * killScore);
+        };
+
+        calculator.getInstructionsFromStrategy = function(strategy, targetScore) {
+            let score = targetScore;
+            if (strategy.killsInUncleared) {
+                score -= strategy.killsInUncleared * killScore;
+            }
+            if (strategy.clearedAreas) {
+                score /= strategy.clearedAreas;
+            }
+            var areas = [];
+            var area = calculator.computeByScore(score);
+            for(var i = 0; i < strategy.clearedAreas; i++) {
+                areas.push({
+                    clearTime: area.clearTime,
+                    kills: area.kills,
+                    score: area.score
+                });
+            }
+            if (strategy.killsInUncleared) {
+                areas.push({
+                    clearTime: 0,
+                    kills: strategy.killsInUncleared,
+                    score: strategy.killsInUncleared*killScore
+                })
+            }
+            return areas;
+        };
+
         calculator.total = function () {
-            let total = 0, end = false;
+            var total = 0, end = false;
             calculator.areas.forEach(function (a) {
                 if (!end)
                     total += parseInt(a.score);
@@ -121,24 +351,30 @@ angular.module('calcApp', ['ngClipboard'])
             return total;
         };
 
-        calculator.copyInstructions = function() {
+        calculator.getInstructionsToString = function(areas) {
             var str = "";
-
-            let ended = false;
-            calculator.areas.forEach(function(area, i) {
+            var ended = false;
+            areas.forEach(function (area, i) {
                 if (ended) return;
                 if (area.kills === 3) {
-                    str += `[A${i+1}] ${calculator.remainingTime(area.clearTime)} time left. `;
+                    str += `[A${i + 1}] ${calculator.remainingTime(area.clearTime)} time left. `;
                 } else if (area.kills > 0) {
                     ended = true;
-                    str += `[A${i+1}] ${area.kills} kill${area.kills === 1? '':'s'}. `;
+                    str += `[A${i + 1}] ${area.kills} kill${area.kills === 1 ? '' : 's'}. `;
                 } else {
                     ended = true;
-                    str += `[A${i+1}] Quit Battle. `;
+                    str += `[A${i + 1}] Quit Battle. `;
                 }
             });
 
-            str += `Score: ${calculator.total()}`;
+            str += `Score: ${ areas.reduce(function(total, e){ return total + e.score; }, 0) }`;
+            return str;
+        };
+
+        calculator.copyInstructions = function() {
+
+            var areas = calculator.areas;
+            str = calculator.getInstructionsToString(areas);
 
             console.log(str);
             ngClipboard.toClipboard(str);

@@ -12,7 +12,7 @@
     </script>
 
     <meta charset="UTF-8">
-    <title>Elchronicle Suikoden War Advisor</title>
+    <title>Elchronicle Suikoden War Calculator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -52,19 +52,35 @@
             </form>
         </div>
     </div>
-    <div class="row">
+    <div class="row" ng-repeat="area in calculator.areas">
+        <div class="col-100">
+            <h4>Area {{$index + 1}}
+            <button type="button" class="btn btn-success btn-sm" ng-show="area.kills !== 0" ng-click="area.kills = 0; calculator.recompute($index, 'Clear Button')">Cleared</button>
+            <button type="button" class="btn btn-danger btn-sm" ng-show="area.kills === 0" ng-click="area.kills = 3; calculator.recompute($index, 'Add Button')">Failed</button></h4>
+        </div>
         <div class="col-sm">
             <form>
                 <div class="form-group">
-                    <label for="target-score">Target Score</label>
-                    <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore">
+                    <label for="clearTime-{{$index}}">Clear Time in seconds</label>
+                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-change="calculator.recompute($index, 'Clear Time')">
+                    <input type="range" class="custom-range" min="0" max="120" ng-model="area.clearTime" ng-change="calculator.adjustRelatively($index, 'Clear Time', {{area.clearTime}})">
+                    <small class="form-text text-muted">{{calculator.remainingTime(area.clearTime)}} left on the clock</small>
                 </div>
-                <div ng-repeat="strategy in calculator.getAdviceByScore(calculator.targetScore) track by $index" ng-show="strategy.show" class="card" style="width: 18rem;">
-                    <div class="card-body">
-                        <h5 class="card-title">{{strategy.title}}</h5>
-                        <p class="card-text">{{calculator.getInstructionsToString(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}</p>
-                        <a href="#" class="card-link">Edit in Calculator</a>
-                    </div>
+            </form>
+        </div>
+        <div class="col-sm">
+            <form>
+                <div class="form-group">
+                    <label for="kills-{{$index}}">Kills</label>
+                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-change="calculator.recompute($index, 'Kill')">
+                </div>
+            </form>
+        </div>
+        <div class="col-sm">
+            <form>
+                <div class="form-group">
+                    <label for="score-{{$index}}">Estimated Score</label>
+                    <input type="number" class="form-control" id="score-{{$index}}" ng-model="area.score" ng-change="calculator.recomputeByScore($index, false)" ng-blur="calculator.recomputeByScore($index, true)">
                 </div>
             </form>
         </div>
