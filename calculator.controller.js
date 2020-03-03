@@ -11,7 +11,7 @@ angular.module('calcApp', ['ngClipboard'])
 
         var calculator = this;
 
-        calculator.targetScore = 9999;
+        calculator.targetScore = "";
         calculator.areas = [{
             clearTime: 0,
             kills: 3,

@@ -27,7 +27,7 @@
 <div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>
     <div class="row">
         <div class="col-sm">
-            <h1>Elchronicle Suikoden War Calculator</h1>
+            <h1>Elchronicle Suikoden War Advisor</h1>
         </div>
     </div>
 
@@ -55,7 +55,7 @@
         <div class="col-sm">
             <form>
                 <div class="form-group">
-                    <label for="target-score">Target Score</label>
+                    <label for="target-score">Just type in your target score below:</label>
                     <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore">
                 </div>
                 <div class="card-deck">
@@ -69,7 +69,7 @@
                         </div>
                     </div>
                 </div>
-                <div ng-if="!calculator.foundAdvice">No strategies found. <a href="index.html">Click here to go to the calculator.</a></div>
+                <div ng-if="!calculator.foundAdvice && calculator.targetScore">No strategies found. <a href="index.html">Click here to go to the calculator.</a></div>
             </form>
         </div>
     </div>
