@@ -1,7 +1,17 @@
 angular.module('calcApp', ['ngClipboard'])
     .constant("moment", moment)
     .controller('CalculatorController', function (moment,ngClipboard) {
+        function getUrlVars() {
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
         var calculator = this;
+
+        calculator.targetScore = 9999;
         calculator.areas = [{
             clearTime: 0,
             kills: 3,
@@ -22,143 +32,216 @@ angular.module('calcApp', ['ngClipboard'])
         var powerOverwhelming = 85;
         var fastTime = 70;
         var averageTime = 50;
+        var foreverTime = 15;
 
         var cases = [{
             title: "Esdeath Level",
+            type: 'Class S Monster',
             min: esdeathTime,
             max: maxTimeLeft,
             clearedAreas: 3,
             killsInUncleared: 0
         },{
             title: "Power Overwhelming",
+            type: 'Class A Monster',
             min: powerOverwhelming,
             max: esdeathTime,
             clearedAreas: 3,
             killsInUncleared: 0
         },{
-            title: "Fast Full Clear",
+            title: "Full Clear",
+            type: "Fast",
             min: fastTime,
             max: powerOverwhelming,
             clearedAreas: 3,
             killsInUncleared: 0
         },{
-            title: "Average Full Clear",
+            title: "Full Clear",
+            type: "Average",
             min: averageTime,
             max: fastTime,
             clearedAreas: 3,
             killsInUncleared: 0
         },{
-            title: "Dragged Full Clear",
-            min: minTimeLeft,
+            title: "Full Clear",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 3,
             killsInUncleared: 0
         },{
-            title: "Fast 2 Clears and 2 Kills",
+            title: "Full Clear",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 3,
+            killsInUncleared: 0
+        },{
+            title: "2 Clears and 2 Kills",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 2,
             killsInUncleared: 2
         },{
-            title: "Average 2 Clears and 2 Kills",
+            title: "2 Clears and 2 Kills",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 2,
             killsInUncleared: 2
         },{
-            title: "Dragged 2 Clears and 2 Kills",
-            min: minTimeLeft,
+            title: "2 Clears and 2 Kills",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 2,
             killsInUncleared: 2
         },{
-            title: "Fast 2 Clears and 1 Kill",
+            title: "2 Clears and 2 Kills",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 2,
+            killsInUncleared: 2
+        },{
+            title: "2 Clears and 1 Kill",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 2,
             killsInUncleared: 1
         },{
-            title: "Average 2 Clears and 1 Kills",
+            title: "2 Clears and 1 Kills",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 2,
             killsInUncleared: 1
         },{
-            title: "Dragged 2 Clears and 1 Kill",
-            min: minTimeLeft,
+            title: "2 Clears and 1 Kill",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 2,
             killsInUncleared: 1
         },{
-            title: "Fast 2 Clears",
+            title: "2 Clears and 1 Kill",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 2,
+            killsInUncleared: 1
+        },{
+            title: "2 Clears",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 2,
             killsInUncleared: 0
         },{
-            title: "Average 2 Clears",
+            title: "2 Clears",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 2,
             killsInUncleared: 0
         },{
-            title: "Dragged 2 Clears",
-            min: minTimeLeft,
+            title: "2 Clears",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 2,
             killsInUncleared: 0
         },{
-            title: "Fast 1 Clear and 2 Kills",
+            title: "2 Clears",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 2,
+            killsInUncleared: 0
+        },{
+            title: "1 Clear and 2 Kills",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 1,
             killsInUncleared: 2
         },{
-            title: "Average 1 Clear and 2 Kills",
+            title: "1 Clear and 2 Kills",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 1,
             killsInUncleared: 2
         },{
-            title: "Dragged 1 Clear and 2 Kills",
-            min: minTimeLeft,
+            title: "1 Clear and 2 Kills",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 1,
             killsInUncleared: 2
         },{
-            title: "Fast 1 Clear and 1 Kill",
+            title: "1 Clear and 2 Kills",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 1,
+            killsInUncleared: 2
+        },{
+            title: "1 Clear and 1 Kill",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 1,
             killsInUncleared: 1
         },{
-            title: "Average 1 Clear and 1 Kills",
+            title: "1 Clear and 1 Kills",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 1,
             killsInUncleared: 1
         },{
-            title: "Dragged 1 Clear and 1 Kill",
-            min: minTimeLeft,
+            title: "1 Clear and 1 Kill",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
             clearedAreas: 1,
             killsInUncleared: 1
         },{
-            title: "Fast 1 Clear",
+            title: "1 Clear and 1 Kill",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
+            clearedAreas: 1,
+            killsInUncleared: 1
+        },{
+            title: "1 Clear",
+            type: "Fast",
             min: powerOverwhelming,
             max: maxTimeLeft,
             clearedAreas: 1,
             killsInUncleared: 0
         },{
-            title: "Average 1 Clear",
+            title: "1 Clear",
+            type: "Average",
             min: averageTime,
             max: powerOverwhelming,
             clearedAreas: 1,
             killsInUncleared: 0
         },{
-            title: "Dragged 1 Clear",
-            min: minTimeLeft,
+            title: "1 Clear",
+            type: "Dragged",
+            min: foreverTime,
             max: averageTime,
+            clearedAreas: 1,
+            killsInUncleared: 0
+        },{
+            title: "1 Clear",
+            type: "Forever",
+            min: minTimeLeft,
+            max: foreverTime,
             clearedAreas: 1,
             killsInUncleared: 0
         }, {
@@ -192,7 +275,6 @@ angular.module('calcApp', ['ngClipboard'])
             } else score = Math.round(maxAreaScore - (clearTime * scorePerSecond));
 
             calculator.areas[index].score = score;
-            ga('send', 'event', 'Recompute Area ' + (index + 1), 'compute', field);
         };
 
         calculator.adjustRelatively = function (index, field, oldValue) {
@@ -277,15 +359,15 @@ angular.module('calcApp', ['ngClipboard'])
                 kills: 3,
                 score: 3600
             };
-            if (score < killScore && onBlur) {
+            if (score < killScore) {
                 area.clearTime = 0;
                 area.kills = 0;
-                area.score = index > 0 ? 0 : 50;
-            } else if (score < killScore * 2 && onBlur) {
+                area.score = 0;
+            } else if (score < killScore * 2) {
                 area.clearTime = 0;
                 area.kills = 1;
                 area.score = killScore;
-            } else if (score < killScore * 3 && onBlur) {
+            } else if (score < killScore * 3) {
                 area.clearTime = 0;
                 area.kills = 2;
                 area.score = killScore * 2;
@@ -297,15 +379,28 @@ angular.module('calcApp', ['ngClipboard'])
             return area;
         };
 
+        calculator.getCalculatorHref = function(instructions) {
+            var string = "calculator.html?";
+            for(var i = 0; i < 3; i++) {
+                if (instructions[i]) {
+                    string += "clearTime." + i + "=" + (instructions[i].clearTime || "0") + "&";
+                    string += "kills." + i + "=" + (instructions[i].kills || "0") + "&";
+                    string += "score." + i + "=" + (instructions[i].score || "0") + "&";
+                }
+            }
+            return string;
+        };
+
         calculator.getAdviceByScore = function(targetScore){
             calculator.recommendations = [];
+            calculator.foundAdvice = false;
 
             cases.forEach(function(e){
                 var minScore = calculator.getBoundary(e.clearedAreas, e.min, e.killsInUncleared);
                 var maxScore = calculator.getBoundary(e.clearedAreas, e.max, e.killsInUncleared);
                 console.log(targetScore, minScore, maxScore, targetScore > minScore && targetScore <= maxScore);
-                if (targetScore > minScore && targetScore <= maxScore) e.show = true;
-                else e.show = false;
+                e.show = targetScore > minScore && targetScore <= maxScore;
+                if (e.show) calculator.foundAdvice = true;
             });
             return cases;
         };
@@ -337,6 +432,15 @@ angular.module('calcApp', ['ngClipboard'])
                     kills: strategy.killsInUncleared,
                     score: strategy.killsInUncleared*killScore
                 })
+            }
+            var length = areas.length;
+            for(var j = 0; j < 3-length; j++) {
+                console.log('push empty instruction', JSON.stringify(strategy), j, 3-areas.length);
+                areas.push({
+                    clearTime: 0,
+                    kills: 0,
+                    score: 0
+                });
             }
             return areas;
         };
@@ -371,12 +475,27 @@ angular.module('calcApp', ['ngClipboard'])
             return str;
         };
 
-        calculator.copyInstructions = function() {
+        calculator.copyInstructions = function(strategy) {
 
             var areas = calculator.areas;
+            if (strategy) {
+                areas = strategy;
+            }
             str = calculator.getInstructionsToString(areas);
 
             console.log(str);
             ngClipboard.toClipboard(str);
         };
+
+
+        var params = getUrlVars();
+
+        Object.keys(params).forEach(function(key) {
+            let keys = key.split('.');
+            if (['clearTime', 'kills', 'score'].indexOf(keys[0]) > -1 && isFinite(keys[1]) && calculator.areas[keys[1]]) {
+                calculator.areas[parseInt(keys[1])][keys[0]] = parseInt(params[key]);
+                calculator.recompute(parseInt(keys[1]), keys[0]);
+            }
+        });
+
     });
