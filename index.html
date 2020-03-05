@@ -12,7 +12,7 @@
     </script>
 
     <meta charset="UTF-8">
-    <title>Elchronicle Suikoden War Calculator</title>
+    <title>Elchronicle Suikoden War Advisor</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
@@ -27,8 +27,7 @@
 <div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>
     <div class="row">
         <div class="col-sm">
-            <h1>Elchronicle Suikoden War Calculator</h1>
-            <h2 style="position: fixed;right: 0px;bottom:0px;background: white;z-index: 9999;width: 100%;padding: 10px;">Total Score: {{calculator.total()}} <button type="button" class="btn btn-default btn-sm" ng-click="calculator.copyInstructions()"><i class="material-icons">content_copy</i></button></h2>
+            <h1>Elchronicle Suikoden War Advisor</h1>
         </div>
     </div>
 
@@ -52,37 +51,26 @@
             </form>
         </div>
     </div>
-    <div class="row" ng-repeat="area in calculator.areas">
-        <div class="col-100">
-            <h4>Area {{$index + 1}}
-            <button type="button" class="btn btn-success btn-sm" ng-show="area.kills !== 0" ng-click="area.kills = 0; calculator.recompute($index, 'Clear Button')">Cleared</button>
-            <button type="button" class="btn btn-danger btn-sm" ng-show="area.kills === 0" ng-click="area.kills = 3; calculator.recompute($index, 'Add Button')">Failed</button></h4>
-        </div>
+    <div class="row">
         <div class="col-sm">
             <form>
                 <div class="form-group">
-                    <label for="clearTime-{{$index}}">Clear Time in seconds</label>
-                    <input type="number" class="form-control" min="0" max="120" id="clearTime-{{$index}}" ng-model="area.clearTime" ng-change="calculator.recompute($index, 'Clear Time')">
-                    <input type="range" class="custom-range" min="0" max="120" ng-model="area.clearTime" ng-change="calculator.adjustRelatively($index, 'Clear Time', {{area.clearTime}})">
-                    <small class="form-text text-muted">{{calculator.remainingTime(area.clearTime)}} left on the clock</small>
+                    <label for="target-score">Just type in your target score below:</label>
+                    <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore" placeholder="{{calculator.getKillScore() + 1}} to {{calculator.getAdviceByScoreMax()}}" autofocus>
                 </div>
+                <div ng-if="!calculator.foundAdvice && calculator.targetScore">No strategies found. <a href="calculator.html">Click here to go to the calculator.</a></div>
             </form>
-        </div>
-        <div class="col-sm">
-            <form>
-                <div class="form-group">
-                    <label for="kills-{{$index}}">Kills</label>
-                    <input type="number" class="form-control" min="0" max="3" id="kills-{{$index}}" ng-model="area.kills" ng-change="calculator.recompute($index, 'Kill')">
+            <div class="card-columns">
+                <div ng-repeat="strategy in calculator.getAdviceByScore(calculator.targetScore) track by $index" ng-if="strategy.show" class="card" style="width: 18rem;">
+                    <div class="card-header">{{strategy.title}} <button type="button" style="float: right" class="btn btn-default btn-sm" ng-click="calculator.copyInstructions(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore), strategy.repetitions)"><i class="material-icons">content_copy</i></button></div>
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2" ng-if="strategy.type" ng-class="{'text-danger':strategy.type == 'Class S Monster', 'text-warning':strategy.type == 'Class A Monster', 'text-success':strategy.type == 'Fast', 'text-primary':strategy.type == 'Average', 'text-warning':strategy.type == 'Dragged', 'text-muted':strategy.type == 'Forever'}">{{strategy.type}}</h6>
+                        <p class="card-text">{{calculator.getInstructionsToString(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}</p>
+                        <h6 ng-if="strategy.repetitions > 1">{{strategy.repetitions}} times</h6>
+                        <a ng-href="{{calculator.getCalculatorHref(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}" class="card-link">Edit in Calculator</a> <span class="badge badge-pill" style="float: right" ng-class="{'badge-success': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 95, 'badge-warning': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 95 && calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 85, 'badge-danger': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 85 }" title="{{calculator.getStrategyEfficiencyScoreTooltip(strategy, calculator.targetScore)}}">{{calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore)}}%</span>
+                    </div>
                 </div>
-            </form>
-        </div>
-        <div class="col-sm">
-            <form>
-                <div class="form-group">
-                    <label for="score-{{$index}}">Estimated Score</label>
-                    <input type="number" class="form-control" id="score-{{$index}}" ng-model="area.score" ng-change="calculator.recomputeByScore($index, false)" ng-blur="calculator.recomputeByScore($index, true)">
-                </div>
-            </form>
+            </div>
         </div>
     </div>
     <div style="margin-bottom: 38px">&nbsp;</div>

@@ -291,7 +291,7 @@ angular.module('calcApp', ['ngClipboard'])
         }];
 
         calculator.getCalculatorHref = function(instructions) {
-            var string = "index.html?tier=" + calculator.tier + "&";
+            var string = "calculator.html?tier=" + calculator.tier + "&";
             for(var i = 0; i < 3; i++) {
                 if (instructions[i]) {
                     string += "clearTime." + i + "=" + (instructions[i].clearTime || "0") + "&";
@@ -573,6 +573,6 @@ angular.module('calcApp', ['ngClipboard'])
                 clone.repetitions = reps;
                 cases.push(clone);
             }
-        })
+        });
 
     });
