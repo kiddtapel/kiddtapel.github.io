@@ -302,6 +302,14 @@ angular.module('calcApp', ['ngClipboard'])
             return string;
         };
 
+        calculator.getAdviceByScoreMax = function() {
+            return maxAreaScore*9;
+        };
+
+        calculator.getKillScore = function() {
+            return killScore;
+        };
+
         calculator.getAdviceByScore = function(targetScore){
             calculator.recommendations = [];
             calculator.foundAdvice = false;
@@ -309,6 +317,10 @@ angular.module('calcApp', ['ngClipboard'])
             cases.forEach(function(e){
                 var minScore = calculator.getBoundary(e.clearedAreas, e.min, e.killsInUncleared);
                 var maxScore = calculator.getBoundary(e.clearedAreas, e.max, e.killsInUncleared);
+                if (e.clearedAreas === 0) {
+                    minScore = (e.killsInUncleared) * killScore;
+                    maxScore = Math.min((e.killsInUncleared+1) * killScore-1, killScore * 3);
+                }
                 t = targetScore / e.repetitions;
                 console.log(e.title, e.repetitions, "repetitions", t, minScore, maxScore, t > minScore && t <= maxScore);
                 e.show = t > minScore && t <= maxScore;
@@ -356,6 +368,18 @@ angular.module('calcApp', ['ngClipboard'])
             }
             return areas;
         };
+
+        calculator.getStrategyEfficiencyScoreTooltip = function(strategy, targetScore) {
+            var areas = calculator.getInstructionsFromStrategy(strategy, targetScore);
+            var total = areas.reduce(function(total, e){ return total + e.score; }, 0);
+            return (total * strategy.repetitions) + " out of " + targetScore;
+        }
+
+        calculator.getStrategyEfficiencyScore = function(strategy, targetScore) {
+            var areas = calculator.getInstructionsFromStrategy(strategy, targetScore);
+            var total = areas.reduce(function(total, e){ return total + e.score; }, 0);
+            return Math.round((total * strategy.repetitions) / targetScore * 100);
+        }
 
         calculator.tier = "1";
         var maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
