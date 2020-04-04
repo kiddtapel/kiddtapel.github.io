@@ -314,27 +314,27 @@ angular.module('calcApp', ['ngClipboard'])
             calculator.recommendations = [];
             calculator.foundAdvice = false;
 
-            cases.forEach(function(e){
-                var minScore = calculator.getBoundary(e.clearedAreas, e.min, e.killsInUncleared);
-                var maxScore = calculator.getBoundary(e.clearedAreas, e.max, e.killsInUncleared);
-                if (e.clearedAreas === 0) {
-                    minScore = (e.killsInUncleared) * killScore;
-                    maxScore = Math.min((e.killsInUncleared+1) * killScore-1, killScore * 3);
+            cases.forEach(function(c){
+                var minScore = calculator.getBoundary(c.clearedAreas, c.min, c.killsInUncleared);
+                var maxScore = calculator.getBoundary(c.clearedAreas, c.max, c.killsInUncleared);
+                if (c.clearedAreas === 0) {
+                    minScore = (c.killsInUncleared) * killScore;
+                    maxScore = Math.min((c.killsInUncleared+1) * killScore-1, killScore * 3);
                 }
-                t = targetScore / e.repetitions;
-                console.log(e.title, e.repetitions, "repetitions", t, minScore, maxScore, t > minScore && t <= maxScore);
-                e.show = t > minScore && t <= maxScore;
-                if (e.show) calculator.foundAdvice = true;
+                t = (targetScore-1) / c.repetitions;
+                // console.log(c.title, c.repetitions, "repetitions", t, minScore, maxScore, t > minScore && t <= maxScore);
+                c.show = t > minScore && t <= maxScore;
+                if (c.show) calculator.foundAdvice = true;
             });
             return cases;
         };
 
         calculator.getBoundary = function(numberOfAreasCleared, timeLeft, killsInAreaUncleared) {
-            return (killScore * 3 + (scorePerSecond * (timeLeft))) * numberOfAreasCleared + ((killsInAreaUncleared || 0) * killScore);
+            return (killScore * 3 + (scorePerSecond * (timeLeft + 0.5))) * numberOfAreasCleared + ((killsInAreaUncleared || 0) * killScore);
         };
 
         calculator.getInstructionsFromStrategy = function(strategy, targetScore) {
-            let score = Math.floor(targetScore / strategy.repetitions);
+            let score = Math.floor((targetScore-1) / strategy.repetitions);
             if (strategy.killsInUncleared) {
                 score -= strategy.killsInUncleared * killScore;
             }
@@ -343,11 +343,26 @@ angular.module('calcApp', ['ngClipboard'])
             }
             var areas = [];
             var area = calculator.computeByScore(score);
+            // console.log(strategy.title, ((score * strategy.clearedAreas - area.score * strategy.clearedAreas) / scorePerSecond));
+            var totalOffsetSeconds = Math.floor((score * strategy.clearedAreas - area.score * strategy.clearedAreas) / scorePerSecond);
+            if (Math.round(area.score * strategy.clearedAreas) === Math.round(score * strategy.clearedAreas))
+                totalOffsetSeconds = -1;
             for(var i = 0; i < strategy.clearedAreas; i++) {
+                var areaOffset = {
+                    time: 0,
+                    score: 0
+                };
+                if (totalOffsetSeconds && area.clearTime > 0) {
+                    let multiplier = totalOffsetSeconds/Math.abs(totalOffsetSeconds);
+                    areaOffset.time = multiplier;
+                    areaOffset.score = scorePerSecond * multiplier;
+                    totalOffsetSeconds -= multiplier;
+                    // console.log('offset', i);
+                }
                 areas.push({
-                    clearTime: area.clearTime,
+                    clearTime: area.clearTime - areaOffset.time,
                     kills: area.kills,
-                    score: area.score
+                    score: area.score + areaOffset.score
                 });
             }
             if (strategy.killsInUncleared) {
@@ -359,7 +374,6 @@ angular.module('calcApp', ['ngClipboard'])
             }
             var length = areas.length;
             for(var j = 0; j < 3-length; j++) {
-                console.log('push empty instruction', JSON.stringify(strategy), j, 3-areas.length);
                 areas.push({
                     clearTime: 0,
                     kills: 0,
@@ -373,18 +387,18 @@ angular.module('calcApp', ['ngClipboard'])
             var areas = calculator.getInstructionsFromStrategy(strategy, targetScore);
             var total = areas.reduce(function(total, e){ return total + e.score; }, 0);
             return (total * strategy.repetitions) + " out of " + targetScore;
-        }
+        };
 
         calculator.getStrategyEfficiencyScore = function(strategy, targetScore) {
             var areas = calculator.getInstructionsFromStrategy(strategy, targetScore);
             var total = areas.reduce(function(total, e){ return total + e.score; }, 0);
             return Math.round((total * strategy.repetitions) / targetScore * 100);
-        }
+        };
 
         calculator.tier = "1";
         var maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
         calculator.recompute = function (index, field) {
-            console.log('recompute', 'index =', index, 'field =', field);
+            // console.log('recompute', 'index =', index, 'field =', field);
             var kills = calculator.areas[index].kills, clearTime = calculator.areas[index].clearTime;
             score = 0;
             if (kills === 0 && index === 0) {
@@ -395,13 +409,13 @@ angular.module('calcApp', ['ngClipboard'])
                 score = killScore;
             } else if (kills === 2) {
                 score = killScore * 2;
-            } else score = Math.round(maxAreaScore - (clearTime * scorePerSecond));
+            } else score = Math.round(maxAreaScore - (Math.max(0, clearTime - 0.5) * scorePerSecond));
 
             calculator.areas[index].score = score;
         };
 
         calculator.adjustRelatively = function (index, field, oldValue) {
-            console.log('adjustRelatively', 'index =', index, 'field =', field, 'oldValue =', oldValue);
+            // console.log('adjustRelatively', 'index =', index, 'field =', field, 'oldValue =', oldValue);
             oldValue = parseInt(oldValue);
             var change = calculator.areas[index].clearTime - oldValue;
             var relativeChanges = [];
@@ -416,11 +430,11 @@ angular.module('calcApp', ['ngClipboard'])
             relativeChanges.forEach(function(c, i) {
                 var halfChange = relativeChanges.length > 1 && i === 0 ? Math[oldValue % 2 === 0? 'ceil' : 'floor'](change/2) : change;
                 if (calculator.areas[c].clearTime - halfChange >= 0 && calculator.areas[c].clearTime - halfChange <= 120) {
-                    console.log('setting', c, -halfChange);
+                    // console.log('setting', c, -halfChange);
                     calculator.areas[c].clearTime -= halfChange;
                     change -= halfChange;
                 } else {
-                    console.log('skipped', c, 'calculator.areas[c].clearTime - halfChange =', calculator.areas[c].clearTime - halfChange);
+                    // console.log('skipped', c, 'calculator.areas[c].clearTime - halfChange =', calculator.areas[c].clearTime - halfChange);
                 }
             });
             calculator.recompute(0, 'Range');
@@ -434,7 +448,7 @@ angular.module('calcApp', ['ngClipboard'])
         };
 
         calculator.changeTier = function () {
-            console.log('changeTier', calculator.tier);
+            // console.log('changeTier', calculator.tier);
             if (calculator.tier === "1") {
                 scorePerSecond = 10.5;
                 killScore = 780;
@@ -454,7 +468,7 @@ angular.module('calcApp', ['ngClipboard'])
         };
 
         calculator.recomputeByScore = function (index, onBlur) {
-            console.log('recomputeByScore', 'index =', index, 'onBlur =', onBlur);
+            // console.log('recomputeByScore', 'index =', index, 'onBlur =', onBlur);
             var score = calculator.areas[index].score;
             if (score < killScore && onBlur) {
                 calculator.areas[index].clearTime = 0;
@@ -495,9 +509,9 @@ angular.module('calcApp', ['ngClipboard'])
                 area.kills = 2;
                 area.score = killScore * 2;
             } else if (score >= killScore * 3 && score <= maxAreaScore) {
-                area.clearTime = Math.ceil((maxAreaScore - score) / scorePerSecond);
+                area.clearTime = Math.round((maxAreaScore - score) / scorePerSecond) + 1;
                 area.kills = 3;
-                area.score = score;
+                area.score = (Math.min(120, 120 - area.clearTime + 0.5) * scorePerSecond) + area.kills * killScore;
             }
             return area;
         };
@@ -541,12 +555,12 @@ angular.module('calcApp', ['ngClipboard'])
             }
             str = calculator.getInstructionsToString(areas);
 
-            console.log(repetitions);
+            // console.log(repetitions);
             if (parseInt(repetitions) > 1) {
                 str += repetitions + " times. Total Score: " + (areas.reduce(function(total, e){ return total + e.score; }, 0) * repetitions);
             }
 
-            console.log(str);
+            // console.log(str);
             ngClipboard.toClipboard(str);
         };
 
