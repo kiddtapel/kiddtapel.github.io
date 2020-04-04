@@ -25,12 +25,12 @@
 <body>
 
 <div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>
-    <div class="row">
-        <div class="col-sm">
-            <h1>Elchronicle Suikoden War Advisor</h1>
-        </div>
+    <div class="jumbotron">
+        <h1 class="display-4">Welcome to our Enhanced Suikoden War Advisor!</h1>
+        <p class="lead">How to use: Simply type in the remaining HP of fortresses. War Advisor and Calculator will do the Math, including adjustments to other areas. </p>
+        <hr class="my-4">
+        <p>Binago ko na yung way ng pag compute to maximum possible score based on clearing time. No need na mag adjust sa timing basta't sundin lang yung time left sa instructions. If ever nabago yung timing sa clock in some areas, click Edit in Calculator then use the sliders para mag auto-adjust yung next areas sa timing.</p>
     </div>
-
     <div class="row">
         <div class="col-sm">
             <form>
@@ -55,7 +55,7 @@
         <div class="col-sm">
             <form>
                 <div class="form-group">
-                    <label for="target-score">Just type in your target score below:</label>
+                    <label for="target-score">Just type in the remaining HP of the Fortress:</label>
                     <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore" placeholder="{{calculator.getKillScore() + 1}} to {{calculator.getAdviceByScoreMax()}}" autofocus>
                 </div>
                 <div ng-if="!calculator.foundAdvice && calculator.targetScore">No strategies found. <a href="calculator.html">Click here to go to the calculator.</a></div>
