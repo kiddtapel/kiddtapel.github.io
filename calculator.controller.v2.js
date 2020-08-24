@@ -14,11 +14,13 @@ angular.module('calcApp', ['ngClipboard'])
         calculator.totalHp = 10800;
         calculator.timeLimit = 120;
         calculator.scorePerKill = 780;
+        calculator.scorePerSecond = 10.5;
 
         calculator.recalibrate = function() {
             killScore = calculator.scorePerKill;
             maxAreaScore = calculator.totalHp / 3;
             scorePerSecond = (maxAreaScore - (killScore * 3)) / calculator.timeLimit;
+            calculator.scorePerSecond = scorePerSecond;
 
             calculator.recompute(0, 'tier');
             calculator.recompute(1, 'tier');
