@@ -291,7 +291,7 @@ angular.module('calcApp', ['ngClipboard'])
         }];
 
         calculator.getCalculatorHref = function(instructions) {
-            var string = "secret-calculator.html?tier=" + calculator.tier + "&";
+            var string = "secret-calculator-v2.html?tier=" + calculator.tier + "&";
             for(var i = 0; i < 3; i++) {
                 if (instructions[i]) {
                     string += "clearTime." + i + "=" + (instructions[i].clearTime || "0") + "&";
