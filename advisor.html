@@ -24,57 +24,58 @@
 </head>
 <body>
 
-<div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>
-    <div class="jumbotron">
-        <h1 class="display-4">Welcome to our Enhanced Suikoden War Advisor!</h1>
-        <p class="lead">How to use: Simply type in the remaining HP of fortresses. War Advisor and Calculator will do the Math, including adjustments to other areas. </p>
-        <hr class="my-4">
-        <p>Binago ko na yung way ng pag compute to maximum possible score based on clearing time. No need na mag adjust sa timing basta't sundin lang yung time left sa instructions. If ever nabago yung timing sa clock in some areas, click Edit in Calculator then use the sliders para mag auto-adjust yung next areas sa timing.</p>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <form>
-                <div class="form-group">
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" id="customRadioInline1" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="1">
-                        <label class="custom-control-label" for="customRadioInline1">F1 and F2</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" id="customRadioInline2" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="2">
-                        <label class="custom-control-label" for="customRadioInline2">F3 and F4</label>
-                    </div>
-                    <div class="custom-control custom-radio custom-control-inline">
-                        <input type="radio" id="customRadioInline3" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="3">
-                        <label class="custom-control-label" for="customRadioInline3">F5 to F8</label>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm">
-            <form>
-                <div class="form-group">
-                    <label for="target-score">Just type in the remaining HP of the Fortress:</label>
-                    <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore" placeholder="{{calculator.getKillScore() + 1}} to {{calculator.getAdviceByScoreMax()}}" autofocus>
-                </div>
-                <div ng-if="!calculator.foundAdvice && calculator.targetScore">No strategies found. <a href="calculator.html">Click here to go to the calculator.</a></div>
-            </form>
-            <div class="card-columns">
-                <div ng-repeat="strategy in calculator.getAdviceByScore(calculator.targetScore) track by $index" ng-if="strategy.show" class="card" style="width: 18rem;">
-                    <div class="card-header">{{strategy.title}} <button type="button" style="float: right" class="btn btn-default btn-sm" ng-click="calculator.copyInstructions(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore), strategy.repetitions)"><i class="material-icons">content_copy</i></button></div>
-                    <div class="card-body">
-                        <h6 class="card-subtitle mb-2" ng-if="strategy.type" ng-class="{'text-danger':strategy.type == 'Class S Monster', 'text-warning':strategy.type == 'Class A Monster', 'text-success':strategy.type == 'Fast', 'text-primary':strategy.type == 'Average', 'text-warning':strategy.type == 'Dragged', 'text-muted':strategy.type == 'Forever'}">{{strategy.type}}</h6>
-                        <p class="card-text">{{calculator.getInstructionsToString(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}</p>
-                        <h6 ng-if="strategy.repetitions > 1">{{strategy.repetitions}} times</h6>
-                        <a ng-href="{{calculator.getCalculatorHref(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}" class="card-link">Edit in Calculator</a> <span class="badge badge-pill" style="float: right" ng-class="{'badge-success': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 95, 'badge-warning': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 95 && calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 85, 'badge-danger': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 85 }" title="{{calculator.getStrategyEfficiencyScoreTooltip(strategy, calculator.targetScore)}}">{{calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore)}}%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div style="margin-bottom: 38px">&nbsp;</div>
-</div>
+Deprecated version
+<!--<div class="container-fluid" ng-controller="CalculatorController as calculator" ng-cloak>-->
+<!--    <div class="jumbotron">-->
+<!--        <h1 class="display-4">Welcome to our Enhanced Suikoden War Advisor!</h1>-->
+<!--        <p class="lead">How to use: Simply type in the remaining HP of fortresses. War Advisor and Calculator will do the Math, including adjustments to other areas. </p>-->
+<!--        <hr class="my-4">-->
+<!--        <p>Binago ko na yung way ng pag compute to maximum possible score based on clearing time. No need na mag adjust sa timing basta't sundin lang yung time left sa instructions. If ever nabago yung timing sa clock in some areas, click Edit in Calculator then use the sliders para mag auto-adjust yung next areas sa timing.</p>-->
+<!--    </div>-->
+<!--    <div class="row">-->
+<!--        <div class="col-sm">-->
+<!--            <form>-->
+<!--                <div class="form-group">-->
+<!--                    <div class="custom-control custom-radio custom-control-inline">-->
+<!--                        <input type="radio" id="customRadioInline1" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="1">-->
+<!--                        <label class="custom-control-label" for="customRadioInline1">F1 and F2</label>-->
+<!--                    </div>-->
+<!--                    <div class="custom-control custom-radio custom-control-inline">-->
+<!--                        <input type="radio" id="customRadioInline2" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="2">-->
+<!--                        <label class="custom-control-label" for="customRadioInline2">F3 and F4</label>-->
+<!--                    </div>-->
+<!--                    <div class="custom-control custom-radio custom-control-inline">-->
+<!--                        <input type="radio" id="customRadioInline3" name="customRadioInline1" class="custom-control-input" ng-change="calculator.changeTier()" ng-model="calculator.tier" value="3">-->
+<!--                        <label class="custom-control-label" for="customRadioInline3">F5 to F8</label>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </form>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div class="row">-->
+<!--        <div class="col-sm">-->
+<!--            <form>-->
+<!--                <div class="form-group">-->
+<!--                    <label for="target-score">Just type in the remaining HP of the Fortress:</label>-->
+<!--                    <input type="number" class="form-control" id="target-score" ng-model="calculator.targetScore" placeholder="{{calculator.getKillScore() + 1}} to {{calculator.getAdviceByScoreMax()}}" autofocus>-->
+<!--                </div>-->
+<!--                <div ng-if="!calculator.foundAdvice && calculator.targetScore">No strategies found. <a href="calculator.html">Click here to go to the calculator.</a></div>-->
+<!--            </form>-->
+<!--            <div class="card-columns">-->
+<!--                <div ng-repeat="strategy in calculator.getAdviceByScore(calculator.targetScore) track by $index" ng-if="strategy.show" class="card" style="width: 18rem;">-->
+<!--                    <div class="card-header">{{strategy.title}} <button type="button" style="float: right" class="btn btn-default btn-sm" ng-click="calculator.copyInstructions(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore), strategy.repetitions)"><i class="material-icons">content_copy</i></button></div>-->
+<!--                    <div class="card-body">-->
+<!--                        <h6 class="card-subtitle mb-2" ng-if="strategy.type" ng-class="{'text-danger':strategy.type == 'Class S Monster', 'text-warning':strategy.type == 'Class A Monster', 'text-success':strategy.type == 'Fast', 'text-primary':strategy.type == 'Average', 'text-warning':strategy.type == 'Dragged', 'text-muted':strategy.type == 'Forever'}">{{strategy.type}}</h6>-->
+<!--                        <p class="card-text">{{calculator.getInstructionsToString(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}</p>-->
+<!--                        <h6 ng-if="strategy.repetitions > 1">{{strategy.repetitions}} times</h6>-->
+<!--                        <a ng-href="{{calculator.getCalculatorHref(calculator.getInstructionsFromStrategy(strategy, calculator.targetScore))}}" class="card-link">Edit in Calculator</a> <span class="badge badge-pill" style="float: right" ng-class="{'badge-success': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 95, 'badge-warning': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 95 && calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) >= 85, 'badge-danger': calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore) < 85 }" title="{{calculator.getStrategyEfficiencyScoreTooltip(strategy, calculator.targetScore)}}">{{calculator.getStrategyEfficiencyScore(strategy, calculator.targetScore)}}%</span>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <div style="margin-bottom: 38px">&nbsp;</div>-->
+<!--</div>-->
 
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
         integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"

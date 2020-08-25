@@ -11,35 +11,19 @@ angular.module('calcApp', ['ngClipboard'])
 
         var calculator = this;
 
-        calculator.totalHp = 10800;
-        calculator.timeLimit = 120;
-        calculator.scorePerKill = 780;
-        calculator.scorePerSecond = 10.5;
-
-        calculator.recalibrate = function() {
-            killScore = calculator.scorePerKill;
-            maxAreaScore = calculator.totalHp / 3;
-            scorePerSecond = (maxAreaScore - (killScore * 3)) / calculator.timeLimit;
-            calculator.scorePerSecond = scorePerSecond;
-
-            calculator.recompute(0, 'tier');
-            calculator.recompute(1, 'tier');
-            calculator.recompute(2, 'tier');
-        };
-
         calculator.targetScore = "";
         calculator.areas = [{
             clearTime: 0,
             kills: 3,
-            score: 3600
+            score: 3300
         }, {
             clearTime: 0,
             kills: 3,
-            score: 3600
+            score: 3300
         }, {
             clearTime: 0,
             kills: 3,
-            score: 3600
+            score: 3300
         }];
 
         var esdeathTime = 95;
@@ -412,7 +396,10 @@ angular.module('calcApp', ['ngClipboard'])
         };
 
         calculator.tier = "1";
-        var maxAreaScore = 3600, scorePerSecond = 10.5, killScore = 780;
+        var totalMaxScore = 9900;
+        var maxAreaScore = totalMaxScore / 3;
+        var killScore = (maxAreaScore * .65) / 3;
+        var scorePerSecond = (maxAreaScore - (killScore * 3)) / maxTimeLeft;
         calculator.recompute = function (index, field) {
             // console.log('recompute', 'index =', index, 'field =', field);
             var kills = calculator.areas[index].kills, clearTime = calculator.areas[index].clearTime;
@@ -466,18 +453,31 @@ angular.module('calcApp', ['ngClipboard'])
         calculator.changeTier = function () {
             // console.log('changeTier', calculator.tier);
             if (calculator.tier === "1") {
-                scorePerSecond = 10.5;
-                killScore = 780;
-                maxAreaScore = 3600;
+                totalMaxScore = 9900;
+                maxAreaScore = totalMaxScore / 3;
+                killScore = (maxAreaScore * .65) / 3;
+                scorePerSecond = (maxAreaScore - (killScore * 3)) / maxTimeLeft;
+                // scorePerSecond = 10.5;
+                // killScore = 780;
+                // maxAreaScore = 3600;
             } else if (calculator.tier === "2") {
-                scorePerSecond = 2.625;
-                killScore = 195;
-                maxAreaScore = 900;
+                totalMaxScore = 3150;
+                maxAreaScore = totalMaxScore / 3;
+                killScore = (maxAreaScore * .65) / 3;
+                scorePerSecond = (maxAreaScore - (killScore * 3)) / maxTimeLeft;
+                // scorePerSecond = 2.625;
+                // killScore = 195;
+                // maxAreaScore = 900;
             } else if (calculator.tier === "3") {
-                scorePerSecond = 0.875;
-                killScore = 65;
-                maxAreaScore = 300;
+                totalMaxScore = 900;
+                maxAreaScore = totalMaxScore / 3;
+                killScore = (maxAreaScore * .65) / 3;
+                scorePerSecond = (maxAreaScore - (killScore * 3)) / maxTimeLeft;
+                // scorePerSecond = 0.875;
+                // killScore = 65;
+                // maxAreaScore = 300;
             }
+            console.log('tier', calculator.tier, {maxAreaScore, killScore, scorePerSecond})
             calculator.recompute(0, 'tier');
             calculator.recompute(1, 'tier');
             calculator.recompute(2, 'tier');
@@ -510,7 +510,7 @@ angular.module('calcApp', ['ngClipboard'])
             var area = {
                 clearTime: 0,
                 kills: 3,
-                score: 3600
+                score: 3300
             };
             if (score < killScore) {
                 area.clearTime = 0;
