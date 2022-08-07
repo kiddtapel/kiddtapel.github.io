@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="testApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Count Unique</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script src="./index.js"></script>
+    <script src="https://rawgit.com/rzajac/angularjs-slider/master/dist/rzslider.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body ng-controller="TestController as test">
+<div class="container-fluid">
+    <table class="table" style="font-family: monospace">
+        <thead>
+        <tr>
+            <td>String</td>
+            <td>Comparison</td>
+            <td>Length</td>
+            <td>Count Set</td>
+            <td>Result</td>
+            <td>Sum of Stats</td>
+            <td>Approximate Sum</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="result in test.results track by $index">
+            <td>{{result.s}}</td>
+            <td>{{result.approx}}<br/>{{result.diff}}<br/>{{result.stats}}</td>
+            <td>{{result.length}}</td>
+            <td>{{result.countSet}}</td>
+            <td>{{result.result}}</td>
+            <td>{{result.sum}}</td>
+            <td>{{result.approxSum}}</td>
+        </tr>
+        <tr>
+            <td>{{test.temporaryResult.s}}</td>
+            <td>{{test.temporaryResult.approx}}<br/>{{test.temporaryResult.diff}}<br/>{{test.temporaryResult.stats}}</td>
+            <td>{{test.temporaryResult.length}}</td>
+            <td>{{test.temporaryResult.countSet}}</td>
+            <td>{{test.temporaryResult.result}}</td>
+            <td>{{test.temporaryResult.sum}}</td>
+            <td>{{test.temporaryResult.approxSum}}</td>
+        </tr>
+        </tbody>
+    </table>
+    <form>
+        <div class="form-row">
+        <div class="col">
+            <label for="length">Length</label>
+            <input ng-change="test.runTemp(test.length, test.duplicateChars)" type="number" ng-model="test.length" class="form-control" id="length"
+                   placeholder="Enter length of string">
+        </div>
+        <div class="col" ng-repeat="item in test.duplicateChars track by $index">
+            <label for="duplicateChar{{$index}}">Duplicate Char {{$index + 1}}</label>
+            <input ng-change="test.runTemp(test.length, test.duplicateChars)" type="number" min="0" max="{{test.length - 1}}" ng-model="item.value" class="form-control" id="duplicateChar{{$index}}"
+                   placeholder="Position of duplicate char (0 to length minus 1)">
+        </div>
+        </div>
+        <button type="submit" class="btn btn-default" ng-click="test.addDuplicate()">Add duplicate</button>
+        <button type="submit" class="btn btn-primary"
+                ng-click="test.testSynthesizedString(test.length, test.duplicateChars)">Test
+        </button>
+    </form>
+</div>
+</body>
+</html>
