@@ -426,8 +426,8 @@
             var isDragging = false;
             var dragStart = { x: 0, y: 0 };
             var lastDragUpdate = 0;
-            var searchedUnit = '';
-            var searchTimer = null;
+            var searchedUnit = '';            var pinchStartDistance = 0;
+            var pinchStartZoom = 1;            var searchTimer = null;
 
             // Initialize map
             function initMap() {
@@ -564,6 +564,21 @@
 
             // Touch events for mobile
             mapContainer.ontouchstart = function(e) {
+                // Two-finger pinch zoom
+                if (e.touches.length === 2) {
+                    isDragging = false;
+                    var touch1 = e.touches[0];
+                    var touch2 = e.touches[1];
+                    var dx = touch2.clientX - touch1.clientX;
+                    var dy = touch2.clientY - touch1.clientY;
+                    pinchStartDistance = Math.sqrt(dx * dx + dy * dy);
+                    pinchStartZoom = zoom;
+                    mapWrapper.style.transition = 'none';
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Single-finger drag
                 if (e.touches.length !== 1) return;
                 
                 // Auto-zoom on first drag if not searched yet
@@ -580,6 +595,24 @@
             };
 
             mapContainer.ontouchmove = function(e) {
+                // Two-finger pinch zoom
+                if (e.touches.length === 2) {
+                    var touch1 = e.touches[0];
+                    var touch2 = e.touches[1];
+                    var dx = touch2.clientX - touch1.clientX;
+                    var dy = touch2.clientY - touch1.clientY;
+                    var currentDistance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (pinchStartDistance > 0) {
+                        var scale = currentDistance / pinchStartDistance;
+                        zoom = Math.max(1, Math.min(pinchStartZoom * scale, 20));
+                        updateTransform();
+                    }
+                    e.preventDefault();
+                    return;
+                }
+                
+                // Single-finger drag
                 if (!isDragging || e.touches.length !== 1) return;
                 
                 var touch = e.touches[0];
@@ -595,18 +628,26 @@
                 e.preventDefault();
             };
 
-            mapContainer.ontouchend = function() {
+            mapContainer.ontouchend = function(e) {
+                // Reset pinch
+                if (e.touches.length < 2) {
+                    pinchStartDistance = 0;
+                }
+                
+                // Release drag
                 if (!isDragging) return;
-                isDragging = false;
-                mapWrapper.style.transition = 'transform 0.3s ease-out';
-                updateCenterUnit();
+                if (e.touches.length === 0) {
+                    isDragging = false;
+                    mapWrapper.style.transition = 'transform 0.3s ease-out';
+                    updateCenterUnit();
+                }
             };
 
             // Wheel zoom
             mapContainer.onwheel = function(e) {
                 e.preventDefault();
                 var delta = e.deltaY > 0 ? 0.9 : 1.1;
-                zoom = Math.max(1, Math.min(zoom * delta, 10));
+                zoom = Math.max(1, Math.min(zoom * delta, 20));
                 updateTransform();
                 
                 // Update center unit after zoom
@@ -728,7 +769,7 @@
 
             // Zoom controls
             window.zoomIn = function() {
-                zoom = Math.min(zoom * 1.3, 10);
+                zoom = Math.min(zoom * 1.3, 20);
                 updateTransform();
                 setTimeout(updateCenterUnit, 50);
             };
