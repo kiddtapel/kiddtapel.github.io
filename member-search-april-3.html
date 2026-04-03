@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Glenbrook 3 HOA Member Search with Map</title>
     <style>
         * {
@@ -337,9 +340,76 @@
                 font-size: 7px;
             }
         }
+
+        /* Update notification styles */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            animation: slideDown 0.3s ease-out;
+            max-width: 90vw;
+        }
+
+        .update-notification.show {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateX(-50%) translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .update-notification-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .update-notification-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .update-notification-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .update-notification-btn:active {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
+    <!-- Update notification -->
+    <div id="update-notification" class="update-notification">
+        <div class="update-notification-text">
+            🎉 A new version is available!
+        </div>
+        <button class="update-notification-btn" onclick="location.reload(true)">Refresh Now</button>
+    </div>
 
     <div class="search-controls">
         <div class="input-group">
@@ -403,6 +473,48 @@
 
     <script>
         (function() {
+            // Version tracking - update this timestamp when you make changes
+            var APP_VERSION = '2026-04-03T00:00:00Z'; // ISO timestamp
+            
+            // Check for updates every 5 minutes
+            function checkForUpdates() {
+                try {
+                    fetch(window.location.href, {
+                        method: 'HEAD',
+                        cache: 'no-cache'
+                    })
+                    .then(function(response) {
+                        var lastModified = response.headers.get('Last-Modified');
+                        if (lastModified) {
+                            var serverDate = new Date(lastModified);
+                            var currentDate = new Date(APP_VERSION);
+                            
+                            // If server file is newer, show update notification
+                            if (serverDate > currentDate) {
+                                showUpdateNotification();
+                            }
+                        }
+                    })
+                    .catch(function(err) {
+                        // Silently fail - don't interrupt user experience
+                        console.log('Update check failed:', err);
+                    });
+                } catch (e) {
+                    // Silently fail if fetch is not supported
+                }
+            }
+            
+            function showUpdateNotification() {
+                var notification = document.getElementById('update-notification');
+                if (notification && !notification.classList.contains('show')) {
+                    notification.classList.add('show');
+                }
+            }
+            
+            // Check for updates on load and every 5 minutes
+            setTimeout(checkForUpdates, 10000); // First check after 10 seconds
+            setInterval(checkForUpdates, 5 * 60 * 1000); // Then every 5 minutes
+            
             // Embedded member data (converted from dash to colon format for consistency)
             var memberData = {"1:1":true,"1:2":true,"1:3":true,"1:4":true,"1:5":false,"1:6":true,"1:7":true,"1:8":true,"1:9":true,"1:10":true,"1:11":true,"1:12":false,"1:13":true,"1:14":true,"1:15":true,"1:16":true,"1:17":true,"1:18":true,"1:19":true,"1:20":true,"1:21":true,"1:22":true,"1:23":true,"1:24":true,"1:25":true,"1:26":true,"1:27":true,"1:28":true,"1:29":true,"1:30":true,"1:31":false,"1:32":true,"1:33":true,"1:34":true,"1:35":true,"1:36":true,"1:37":true,"1:38":true,"1:39":false,"1:40":true,"1:41":true,"1:42":false,"1:43":true,"1:44":true,"1:45":true,"1:46":true,"1:47":true,"1:48":true,"1:49":true,"1:50":false,"1:51":true,"1:52":true,"1:53":false,"1:54":true,"1:55":true,"1:56":true,"1:57":false,"1:58":true,"1:59":true,"1:60":true,"1:61":true,"1:62":true,"1:63":true,"1:64":true,"2:1":true,"2:2":false,"2:3":true,"2:4":true,"2:5":false,"2:6":false,"2:7":true,"2:8":true,"2:9":true,"2:10":true,"2:11":false,"2:12":true,"2:13":true,"2:14":true,"2:15":true,"2:16":true,"2:17":false,"2:18":false,"2:19":true,"2:20":true,"2:21":false,"2:22":true,"2:23":false,"2:24":true,"2:25":false,"2:26":true,"2:27":false,"2:28":false,"2:29":false,"2:30":true,"2:31":true,"2:32":true,"2:33":true,"2:34":false,"2:35":false,"2:36":true,"2:37":true,"2:38":true,"2:39":false,"2:40":true,"2:41":true,"2:42":true,"2:43":true,"2:44":true,"2:45":true,"2:46":true,"2:47":true,"2:48":true,"2:49":false,"2:50":true,"2:51":true,"2:52":true,"2:53":true,"2:54":true,"2:55":true,"2:56":false,"2:57":true,"2:58":true,"2:59":true,"2:60":true,"2:61":true,"2:62":false,"2:63":false,"2:64":true,"2:65":true,"2:66":false,"2:67":false,"2:68":true,"2:69":true,"2:70":false,"2:71":true,"2:72":false,"2:73":true,"2:74":true,"2:75":false,"2:76":true,"2:77":true,"2:78":true,"2:79":false,"2:80":true,"2:81":true,"2:82":false,"3:1":true,"3:2":false,"3:3":true,"3:4":true,"3:5":false,"3:6":true,"3:7":false,"3:8":false,"3:9":false,"3:10":true,"3:11":false,"3:12":true,"3:13":false,"3:14":false,"3:15":true,"3:16":true,"3:17":true,"3:18":true,"3:19":false,"3:20":false,"3:21":false,"3:22":false,"3:23":false,"3:24":false,"3:25":true,"3:26":true,"3:27":true,"3:28":true,"3:29":false,"3:30":true,"3:31":true,"3:32":true,"3:33":true,"3:34":true,"3:35":false,"3:36":true,"3:37":true,"3:38":true,"3:39":true,"3:40":true,"3:41":true,"3:42":false,"3:43":true,"3:44":true,"3:45":true,"3:46":true,"3:47":true,"3:48":true,"3:49":true,"3:50":true,"4:1":true,"4:2":true,"4:3":true,"4:4":true,"4:5":true,"4:6":false,"4:7":false,"4:8":true,"4:9":false,"4:10":true,"4:11":false,"4:12":false,"4:13":true,"4:14":true,"4:15":true,"4:16":true,"4:17":false,"4:18":true,"4:19":true,"4:20":false,"4:21":false,"4:22":true,"4:23":false,"4:24":true,"4:25":true,"4:26":true,"4:27":true,"4:28":true,"4:29":true,"4:30":false,"4:31":true,"4:32":true,"4:33":false,"4:34":true,"4:35":true,"4:36":false,"4:37":true,"4:38":true,"4:39":false,"4:40":false,"4:41":false,"4:42":true,"4:43":false,"4:44":true,"4:45":false,"4:46":true,"4:47":false,"4:48":false,"4:49":false,"4:50":false,"4:51":true,"4:52":true,"4:53":true,"4:54":false,"4:55":true,"4:56":true,"4:57":true,"4:58":true,"4:59":false,"4:60":false,"4:61":true,"4:62":true,"4:63":true,"4:64":true,"4:65":true,"4:66":false,"4:67":false,"4:68":true,"4:69":true,"4:70":true,"4:71":true,"4:72":true,"4:73":true,"4:74":true,"4:75":true,"4:76":true,"4:77":true,"4:78":false,"4:79":true,"4:80":true,"4:81":true,"4:82":false,"4:83":false,"4:84":false,"4:85":true,"4:86":true,"4:87":false,"4:88":true,"4:89":false,"4:90":true,"4:91":true,"4:92":true,"4:93":true,"4:94":true,"4:95":true,"4:96":true,"4:97":false,"4:98":true,"4:99":true,"4:100":true,"4:101":true,"4:102":true,"4:103":true,"4:104":false,"4:105":false,"4:106":true,"4:107":false,"4:108":true,"4:109":false,"4:110":true,"4:111":true,"4:112":true,"4:113":true,"4:114":false,"4:115":false,"4:116":true,"4:117":false,"4:118":false,"4:119":false,"4:120":false,"4:121":true,"4:122":true,"4:123":true,"4:124":true,"4:125":false,"4:126":false,"4:127":true,"4:128":false,"4:129":false,"4:130":true,"4:131":true,"4:132":true,"4:133":false,"4:134":false,"4:135":true,"4:136":true,"4:137":true,"4:138":true,"4:139":true,"4:140":true,"4:141":true,"4:142":true,"4:143":false,"4:144":false,"4:145":true,"4:146":true,"5:1":true,"5:2":true,"5:3":false,"5:4":false,"5:5":true,"5:6":true,"5:7":true,"5:8":true,"5:9":false,"5:10":false,"5:11":false,"5:12":true,"5:13":true,"5:14":false,"5:15":true,"5:16":true,"5:17":true,"5:18":true,"5:19":true,"5:20":true,"5:21":true,"5:22":true,"5:23":true,"5:24":true,"5:25":true,"5:26":true,"5:27":false,"5:28":true,"5:29":false,"5:30":true,"5:31":true,"5:32":true,"5:33":true,"5:34":true,"5:35":false,"5:36":true,"5:37":true,"5:38":true,"5:39":false,"5:40":true,"5:41":false,"5:42":true,"5:43":true,"5:44":true,"5:45":false,"5:46":false,"5:47":false,"5:48":true,"5:49":true,"5:50":true,"5:51":true,"5:52":false,"5:53":true,"5:54":true,"5:55":true,"5:56":false,"5:57":true,"5:58":true,"5:59":true,"5:60":true,"5:61":true,"5:62":true,"5:63":false,"5:64":false,"5:65":true,"5:66":true,"5:67":true,"5:68":true,"5:69":true,"5:70":true,"5:71":true,"5:72":true,"5:73":false,"5:74":false,"5:75":true,"5:76":false,"5:77":false,"5:78":false,"5:79":false,"5:80":true,"5:81":false,"5:82":false,"5:83":true,"5:84":true,"5:85":false,"5:86":true,"5:87":true};
 
