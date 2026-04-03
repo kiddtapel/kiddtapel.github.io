@@ -473,13 +473,39 @@
 
     <script>
         (function() {
-            // Adding this line to force an updated version
-            // Version tracking - update this timestamp when you make changes
-            var APP_VERSION = '2026-04-03T00:00:00Z'; // ISO timestamp
+            // Version tracking using localStorage
+            var STORAGE_KEY = 'hoa-member-app-loaded-version';
+            
+            // Store the current version timestamp when page first loads
+            function initializeVersion() {
+                try {
+                    fetch(window.location.href, {
+                        method: 'HEAD',
+                        cache: 'no-cache'
+                    })
+                    .then(function(response) {
+                        var lastModified = response.headers.get('Last-Modified');
+                        if (lastModified && !localStorage.getItem(STORAGE_KEY)) {
+                            // First time loading - store this version
+                            localStorage.setItem(STORAGE_KEY, lastModified);
+                        }
+                    })
+                    .catch(function(err) {
+                        console.log('Version init failed:', err);
+                    });
+                } catch (e) {
+                    // Silently fail
+                }
+            }
             
             // Check for updates every 5 minutes
             function checkForUpdates() {
                 try {
+                    var storedVersion = localStorage.getItem(STORAGE_KEY);
+                    if (!storedVersion) {
+                        return; // Not initialized yet
+                    }
+                    
                     fetch(window.location.href, {
                         method: 'HEAD',
                         cache: 'no-cache'
@@ -488,10 +514,10 @@
                         var lastModified = response.headers.get('Last-Modified');
                         if (lastModified) {
                             var serverDate = new Date(lastModified);
-                            var currentDate = new Date(APP_VERSION);
+                            var loadedDate = new Date(storedVersion);
                             
-                            // If server file is newer, show update notification
-                            if (serverDate > currentDate) {
+                            // If server file is newer than what we loaded, show update notification
+                            if (serverDate > loadedDate) {
                                 showUpdateNotification();
                             }
                         }
@@ -511,6 +537,9 @@
                     notification.classList.add('show');
                 }
             }
+            
+            // Initialize version tracking
+            initializeVersion();
             
             // Check for updates on load and every 5 minutes
             setTimeout(checkForUpdates, 10000); // First check after 10 seconds
