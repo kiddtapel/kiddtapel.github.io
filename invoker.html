@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoker Combo Trainer</title>
+<style>
+  :root{
+    --quas:#3aa0e0; --wex:#e8c94a; --exort:#e0553a;
+    --bg:#0e1116; --panel:#171c24; --panel-border:#333c4a; --gold:#d8b466;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#05070a;color:#dfe4ea;font-family:'Segoe UI',Arial,sans-serif;}
+  #app{max-width:1000px;margin:10px auto;display:flex;flex-direction:column;gap:8px;padding:0 8px;}
+  .panel{background:var(--panel);border:1px solid var(--panel-border);border-radius:8px;padding:8px 12px;}
+  h1{font-size:16px;margin:4px 0;color:var(--gold);letter-spacing:.5px;}
+  #objective-panel{display:flex;flex-direction:column;gap:6px;}
+  #objective-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  #objective-text{flex:1;min-width:220px;}
+  #objective-text .title{font-weight:600;color:var(--gold);font-size:15px;}
+  #objective-text .desc{font-size:12.5px;color:#aab3c0;margin-top:2px;}
+  #objective-stats{display:flex;gap:14px;align-items:center;font-size:13px;white-space:nowrap;}
+  #objective-stats b{color:var(--gold);}
+  #controls{display:flex;gap:6px;flex-wrap:wrap;}
+  button.ctrl{background:#232b38;color:#dfe4ea;border:1px solid #3a4556;border-radius:5px;padding:6px 10px;font-size:12px;cursor:pointer;}
+  button.ctrl:hover{background:#2c3648;}
+  #chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{display:flex;flex-direction:column;align-items:center;background:#1e2530;border:1px solid #333c4a;border-radius:5px;padding:4px 8px;font-size:12px;opacity:.55;min-width:70px;}
+  .chip small{color:#8b95a5;font-size:10px;margin-top:2px;letter-spacing:1px;}
+  .chip.active{opacity:1;border-color:var(--gold);box-shadow:0 0 6px rgba(216,180,102,.4);}
+  .chip.done{opacity:.85;border-color:#4caf6b;color:#8ee3a6;}
+  #canvas-wrap{position:relative;line-height:0;border:2px solid #333c4a;border-radius:6px;overflow:hidden;background:#0a0d12;}
+  #game{width:100%;height:auto;display:block;cursor:crosshair;}
+  #overlay-msg{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:34px;font-weight:700;text-shadow:0 2px 8px #000;opacity:0;transition:opacity .2s;}
+  #hint-bar{position:absolute;bottom:4px;left:8px;font-size:11px;color:#9aa5b5;background:rgba(0,0,0,.35);padding:3px 7px;border-radius:4px;pointer-events:none;}
+  #hud-bottom{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .orb-group{display:flex;align-items:center;gap:6px;}
+  .orb-btn{position:relative;width:42px;height:42px;border-radius:6px;border:2px solid #333c4a;font-weight:700;font-size:16px;cursor:pointer;color:#0a0d12;}
+  .orb-btn.quas{background:var(--quas);} .orb-btn.wex{background:var(--wex);} .orb-btn.exort{background:var(--exort);}
+  .orb-btn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
+  #orbBuffer{display:flex;gap:3px;margin-left:4px;}
+  .buf-slot{width:16px;height:16px;border-radius:3px;background:#222a35;border:1px solid #3a4556;}
+  .buf-slot.q{background:var(--quas);} .buf-slot.w{background:var(--wex);} .buf-slot.e{background:var(--exort);}
+  #invokeBtn{width:56px;height:42px;border-radius:6px;background:#4b3f7a;border:2px solid #6a58ad;color:#f0e9ff;font-weight:700;font-size:13px;cursor:pointer;position:relative;}
+  #invokeBtn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
+  .spell-slot{position:relative;width:52px;height:52px;border-radius:6px;background:#1c222c;border:2px solid #3a4556;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer;overflow:hidden;color:#dfe4ea;}
+  .spell-slot .key{position:absolute;top:1px;left:3px;font-size:10px;color:#8b95a5;}
+  .spell-slot .cdfill{position:absolute;bottom:0;left:0;width:100%;background:rgba(0,0,0,.72);height:0%;}
+  .spell-slot .cdtext{position:absolute;font-size:12px;font-weight:700;color:#fff;z-index:2;}
+  .spell-slot.empty{opacity:.35;}
+  #bars{display:flex;flex-direction:column;gap:4px;min-width:150px;}
+  .bar{position:relative;height:12px;border-radius:3px;background:#222a35;border:1px solid #3a4556;overflow:hidden;}
+  .bar .fill{height:100%;}
+  .bar.hp .fill{background:#3fae55;}
+  .bar.mana .fill{background:#3a7fe0;}
+  .bar span{position:absolute;top:-1px;right:4px;font-size:9px;color:#fff;text-shadow:0 1px 2px #000;}
+  #speedText{font-size:11px;color:#9aa5b5;}
+  .slot-wrap{position:relative;}
+  .cast-caret{position:absolute;bottom:-1px;right:-1px;width:14px;height:12px;background:#232b38;border:1px solid #3a4556;border-radius:0 0 4px 0;font-size:8px;line-height:11px;text-align:center;cursor:pointer;color:#9aa5b5;z-index:3;}
+  .cast-caret:hover{background:#2c3648;color:#dfe4ea;}
+  .cast-dropdown{position:absolute;bottom:56px;right:0;background:#171c24;border:1px solid #3a4556;border-radius:6px;padding:4px;display:none;flex-direction:column;gap:2px;z-index:10;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.45);}
+  .cast-dropdown.open{display:flex;}
+  .cast-dropdown button{background:#1c222c;color:#9aa5b5;border:1px solid #3a4556;border-radius:4px;padding:4px 9px;font-size:11px;cursor:pointer;text-align:left;}
+  .cast-dropdown button:hover{background:#2c3648;color:#dfe4ea;}
+  .cast-dropdown button.active{background:#4b3f7a;color:#f0e9ff;border-color:#6a58ad;}
+  #modeTabs{display:flex;gap:4px;margin-bottom:2px;}
+  .tab-btn{background:#1c222c;color:#9aa5b5;border:1px solid #3a4556;border-bottom:none;border-radius:6px 6px 0 0;padding:6px 12px;font-size:12.5px;cursor:pointer;}
+  .tab-btn.active{background:var(--panel);color:var(--gold);border-color:var(--gold);}
+  #icewallPanel{display:flex;flex-direction:column;gap:8px;}
+  #iw-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  #iw-stats{display:flex;gap:16px;align-items:center;font-size:13px;white-space:nowrap;}
+  #iw-stats b{color:var(--gold);}
+  #log{height:96px;overflow-y:auto;background:#0b0e13;border:1px solid #333c4a;border-radius:6px;padding:5px 8px;font-family:Consolas,Monaco,monospace;font-size:11.5px;color:#9fb0c3;}
+  #log div{padding:1px 0;}
+  footer{font-size:11px;color:#5b6472;text-align:center;padding:4px 0 10px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>⚡ Invoker Combo Trainer</h1>
+
+  <div id="modeTabs">
+    <button class="tab-btn active" id="tabCombo">⚔️ Combo Trainer</button>
+    <button class="tab-btn" id="tabIceWall">🧊 Ice Wall Precision</button>
+  </div>
+
+  <div class="panel" id="objective-panel">
+    <div id="comboPanel">
+      <div id="objective-top">
+        <div id="objective-text">
+          <div class="title" id="objTitle">—</div>
+          <div class="desc" id="objDesc">Press "New Scenario" to begin.</div>
+        </div>
+        <div id="objective-stats">
+          <div>Time: <b id="timerText">--</b></div>
+          <div>Score: <b id="scoreText">0</b></div>
+        </div>
+        <div id="controls">
+          <button class="ctrl" id="newScenarioBtn">🎲 New Scenario</button>
+          <button class="ctrl" id="retryBtn">🔁 Retry</button>
+          <button class="ctrl" id="rotationBtn">🔟 Full Rotation Drill</button>
+        </div>
+      </div>
+      <div id="chips"></div>
+      <div id="positionStatus" style="display:none;font-size:12px;margin-top:2px;"></div>
+    </div>
+    <div id="icewallPanel" style="display:none">
+      <div id="iw-top">
+        <div id="objective-text">
+          <div class="title">Ice Wall Precision Drill</div>
+          <div class="desc">Face the enemy and cast Ice Wall so it lands directly on top of them. A new random position is generated after every attempt.</div>
+        </div>
+        <div id="iw-stats">
+          <div>Attempts: <b id="iwAttempts">0</b></div>
+          <div>Hits: <b id="iwHits">0</b></div>
+          <div>Accuracy: <b id="iwAccuracy">0%</b></div>
+          <div>Last: <b id="iwLast">—</b></div>
+        </div>
+        <div id="controls">
+          <button class="ctrl" id="iwNewBtn">🎲 New Position</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="game" width="960" height="540"></canvas>
+    <div id="overlay-msg"></div>
+    <div id="hint-bar">Right-click: move · Q/W/E: queue orb · R: invoke · D/F: cast slot · Esc: cancel targeting</div>
+  </div>
+
+  <div class="panel" id="hud-bottom">
+    <div class="orb-group">
+      <button class="orb-btn quas" id="btnQ" data-orb="q">Q<span class="lvl" id="lvlQ">1</span></button>
+      <button class="orb-btn wex" id="btnW" data-orb="w">W<span class="lvl" id="lvlW">1</span></button>
+      <button class="orb-btn exort" id="btnE" data-orb="e">E<span class="lvl" id="lvlE">1</span></button>
+      <div id="orbBuffer"></div>
+    </div>
+    <button id="invokeBtn">INVOKE<span class="lvl" id="lvlR">1</span></button>
+    <div class="slot-wrap">
+      <div class="spell-slot empty" id="slotD" data-slot="0"><span class="key">D</span></div>
+      <div class="cast-caret" id="caretD" title="Cast behavior">▾</div>
+      <div class="cast-dropdown" id="dropdownD">
+        <button data-mode="normal">Normal (click)</button>
+        <button data-mode="press">Quick Cast (press)</button>
+        <button data-mode="release">Quick Cast (release)</button>
+      </div>
+    </div>
+    <div class="slot-wrap">
+      <div class="spell-slot empty" id="slotF" data-slot="1"><span class="key">F</span></div>
+      <div class="cast-caret" id="caretF" title="Cast behavior">▾</div>
+      <div class="cast-dropdown" id="dropdownF">
+        <button data-mode="normal">Normal (click)</button>
+        <button data-mode="press">Quick Cast (press)</button>
+        <button data-mode="release">Quick Cast (release)</button>
+      </div>
+    </div>
+    <div id="bars">
+      <div class="bar hp"><div class="fill" id="hpFill" style="width:100%"></div><span id="hpText">600/600</span></div>
+      <div class="bar mana"><div class="fill" id="manaFill" style="width:100%"></div><span id="manaText">300/300</span></div>
+      <div id="speedText">Move Speed: --</div>
+    </div>
+  </div>
+
+  <div class="panel" id="log"></div>
+  <footer>Training viewport scaled to approximate a Dota-style camera view. Cooldowns are shortened for rapid drilling.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------------------------------------------------------------
+   Constants / world setup
+--------------------------------------------------------------------- */
+const VIEW = { w: 960, h: 540 };
+// World is restricted to exactly the visible window — the camera never scrolls,
+// mirroring a fixed Dota-style viewport rather than a free-roam map.
+const WORLD = { w: VIEW.w, h: VIEW.h };
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const logEl = document.getElementById('log');
+const overlayMsg = document.getElementById('overlay-msg');
+
+function rand(min, max){ return min + Math.random()*(max-min); }
+function randInt(min, max){ return Math.floor(rand(min, max+1)); }
+function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+function dist(a, b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function angleTo(a, b){ return Math.atan2(b.y-a.y, b.x-a.x); }
+function choice(arr){ return arr[randInt(0, arr.length-1)]; }
+
+function log(msg){
+  const div = document.createElement('div');
+  const t = new Date();
+  const stamp = t.toTimeString().slice(0,8);
+  div.textContent = `[${stamp}] ${msg}`;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+  while(logEl.children.length > 60) logEl.removeChild(logEl.firstChild);
+}
+
+function flashOverlay(text, color){
+  overlayMsg.textContent = text;
+  overlayMsg.style.color = color || '#d8b466';
+  overlayMsg.style.opacity = '1';
+  clearTimeout(flashOverlay._t);
+  flashOverlay._t = setTimeout(()=>{ overlayMsg.style.opacity = '0'; }, 1400);
+}
+
+/* ---------------------------------------------------------------------
+   Spell / combo definitions
+--------------------------------------------------------------------- */
+// Pixels-per-Dota-unit conversion so spell radii/ranges/speeds are scaled
+// proportionally to their real in-game values within our fixed 960x540 window.
+const PPU = 0.5;
+function U(units){ return units * PPU; }
+
+const ORB_COMBOS = {
+  qqq:'coldsnap', qqw:'ghostwalk', qqe:'icewall',
+  qww:'tornado',  qwe:'emp',      qee:'forgespirit',
+  www:'alacrity', wwe:'deafeningblast', wee:'chaosmeteor', eee:'sunstrike'
+};
+
+const SPELLS = {
+  coldsnap:      { name:'Cold Snap',       icon:'❄️', combo:'QQQ', cast:'unit', cd:6,  mana:70,  color:'#3aa0e0' },
+  ghostwalk:     { name:'Ghost Walk',      icon:'👻', combo:'QQW', cast:'self', cd:9,  mana:65,  color:'#3aa0e0' },
+  // Ice Wall: real length ~700, cast range ~850, wall thickness ~60 (all converted to px via PPU)
+  icewall:       { name:'Ice Wall',        icon:'🧊', combo:'QQE', cast:'point',cd:8,  mana:70,  color:'#5fd0e8',
+                    range: U(850), length: U(700), thickness: U(60) },
+  // Tornado: cast range ~1000, travel speed ~1150 (very fast), path half-width ~100
+  tornado:       { name:'Tornado',         icon:'🌪️', combo:'QWW', cast:'point',cd:10, mana:100, color:'#bcd6e0',
+                    range: U(1000), speed: U(1150), halfWidth: U(100) },
+  // Deafening Blast: cast range ~1000, travel speed ~900, path half-width ~110
+  deafeningblast:{ name:'Deafening Blast', icon:'💥', combo:'WWE', cast:'point',cd:12, mana:150, color:'#c9a7e8',
+                    range: U(1000), speed: U(900), halfWidth: U(110) },
+  forgespirit:   { name:'Forge Spirit',    icon:'🔥', combo:'QEE', cast:'point',cd:14, mana:110, color:'#e08a3a',
+                    range: U(700) },
+  // EMP: cast range ~1000, radius ~650 (one of the biggest AoEs in the game), delay before it pulses
+  emp:           { name:'EMP',             icon:'⚡', combo:'QWE', cast:'point',cd:14, mana:110, color:'#e8c94a',
+                    range: U(1000), delay:2.2, radius: U(650) },
+  alacrity:      { name:'Alacrity',        icon:'✨', combo:'WWW', cast:'unit', cd:5,  mana:60,  color:'#e8c94a' },
+  // Sun Strike: effectively global range, radius ~175, long delay before impact
+  sunstrike:     { name:'Sun Strike',      icon:'☀️', combo:'EEE', cast:'point',cd:7,  mana:140, color:'#f2a33a',
+                    delay:1.7, radius: U(175) },
+  // Chaos Meteor: cast range ~1000, radius ~275, falls from the sky at the target point then
+  // keeps rolling onward (away from Invoker) at ~350 speed for another ~900 units
+  chaosmeteor:   { name:'Chaos Meteor',    icon:'☄️', combo:'WEE', cast:'point',cd:16, mana:150, color:'#e0553a',
+                    range: U(1000), speed: U(350), radius: U(275), fallDelay:0.6, rollDistance: U(900) }
+};
+
+const SCENARIO_TEMPLATES = [
+  { title:'Tornado Combo', desc:'Lift the target with Tornado, then finish with Sun Strike before they land.', sequence:['tornado','sunstrike'], time:35, enemyCount:2 },
+  { title:'Meteor Setup', desc:'Two heroes are grouped up — Tornado both of them, then roll a Chaos Meteor through the landing zone to hit both again.', sequence:['tornado','chaosmeteor'], time:40, enemyCount:2, minHits:2 },
+  { title:'Pickoff', desc:'Cold Snap to mark them, then Alacrity yourself to chase and proc the stacking stun.', sequence:['coldsnap','alacrity'], time:28, enemyCount:1 },
+  { title:'Lockdown Chain', desc:'Line up both heroes — Tornado to lift them together, then Deafening Blast to knock them both away and stun again on landing.', sequence:['tornado','deafeningblast'], time:35, enemyCount:2, minHits:2 },
+  { title:'Ice Wall Cutoff', desc:'Face their escape route and wall them in before they reach safety.', sequence:['icewall'], time:25, special:'wall-block', enemyCount:1 },
+  { title:'Ghost Ambush', desc:'Ghost Walk to vanish, sneak to the marked position while hidden, then Tornado into Sun Strike.', sequence:['ghostwalk','tornado','sunstrike'], time:50, enemyCount:1,
+    positionGoal:{ requiredBeforeIndex:1, requireInvisible:true, radius:45 } },
+  { title:'Vanish & Wall', desc:'Ghost Walk to vanish from the gank, then Ice Wall behind you to block the chase.', sequence:['ghostwalk','icewall'], time:28, enemyCount:1 },
+  { title:'Mana Burn', desc:'Catch a pair of high-mana heroes out of position and burn both with a single EMP.', sequence:['emp'], time:25, enemyCount:2, minHits:2 },
+  { title:'Split Push', desc:'Summon Forge Spirits to safely push and clear a lane alone.', sequence:['forgespirit'], time:20, enemyCount:1 },
+  { title:'Max Damage Combo', desc:'The full burst: Cold Snap to slow, Tornado to lift, Deafening Blast to knock further, Chaos Meteor to roll through, Sun Strike to finish.', sequence:['coldsnap','tornado','deafeningblast','chaosmeteor','sunstrike'], time:65, enemyCount:1 },
+  { title:'Double Setup', desc:'Cold Snap them, Tornado to lift, then Sun Strike to finish.', sequence:['coldsnap','tornado','sunstrike'], time:45, enemyCount:1 }
+];
+const FULL_ROTATION = { title:'Full Rotation Drill', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE).',
+  sequence:['coldsnap','ghostwalk','icewall','tornado','emp','forgespirit','alacrity','deafeningblast','chaosmeteor','sunstrike'], time:150, enemyCount:2 };
+
+function comboKeyFromQueue(queue){
+  if(queue.length < 3) return null;
+  const last3 = queue.slice(-3);
+  const counts = {q:0,w:0,e:0};
+  last3.forEach(c=>counts[c]++);
+  return 'q'.repeat(counts.q)+'w'.repeat(counts.w)+'e'.repeat(counts.e);
+}
+
+/* ---------------------------------------------------------------------
+   Entities
+--------------------------------------------------------------------- */
+const player = {
+  x: WORLD.w/2, y: WORLD.h/2, radius: 14, facing: 0,
+  moveTarget: null, speed: 130,
+  hp: 600, hpMax: 600, mana: 300, manaMax: 300, manaRegen: 10,
+  orbLevels: {q:1,w:1,e:1}, invokeLevel:1,
+  orbQueue: [], slots: [null, null], cooldowns: {}, reinvokeCd: 0,
+  invisible:false, buffs:{}
+};
+let enemies = [];
+let effects = [];
+let allies = [];
+let moveClicks = []; // fading right-click ping markers
+
+let camera = { x: player.x, y: player.y };
+let mouseScreen = { x: VIEW.w/2, y: VIEW.h/2 };
+let mouseWorld = { x: player.x, y: player.y };
+let targetingSpell = null; // key of spell awaiting a click target (normal / release-hold preview)
+let targetingSlot = null; // which slot (0=D,1=F) is currently targeting, drives per-slot cast mode
+let slotCastMode = ['normal', 'normal']; // per D/F slot: 'normal' | 'press' | 'release'
+let pendingReleaseSlot = null; // slot index waiting for key-up to fire (release quick-cast)
+
+let scenario = null;
+let currentTemplate = null;
+let lastTemplateTitle = null;
+let score = 0;
+
+let mode = 'combo'; // 'combo' | 'icewall'
+let iceWallDrill = { attempts:0, hits:0, lastResult:null };
+
+/* ---------------------------------------------------------------------
+   Coordinate helpers
+--------------------------------------------------------------------- */
+function updateCamera(){
+  camera.x = clamp(player.x, VIEW.w/2, Math.max(VIEW.w/2, WORLD.w - VIEW.w/2));
+  camera.y = clamp(player.y, VIEW.h/2, Math.max(VIEW.h/2, WORLD.h - VIEW.h/2));
+}
+function worldToScreen(x,y){ return { x: x - (camera.x - VIEW.w/2), y: y - (camera.y - VIEW.h/2) }; }
+function screenToWorld(x,y){ return { x: x + (camera.x - VIEW.w/2), y: y + (camera.y - VIEW.h/2) }; }
+
+function canvasEventToWorld(evt){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const sx = (evt.clientX - rect.left) * scaleX;
+  const sy = (evt.clientY - rect.top) * scaleY;
+  return screenToWorld(sx, sy);
+}
+
+/* ---------------------------------------------------------------------
+   Scenario management
+--------------------------------------------------------------------- */
+function randomTemplate(){
+  let t;
+  do { t = choice(SCENARIO_TEMPLATES); } while(SCENARIO_TEMPLATES.length > 1 && t.title === lastTemplateTitle);
+  lastTemplateTitle = t.title;
+  return t;
+}
+
+function spawnEnemy(special, count){
+  const margin = 50;
+  const n = count || 1;
+  enemies = [];
+  for(let i=0;i<n;i++){
+    // spawn within the fixed window so the target is visible right away, and
+    // keep multiple enemies spaced apart rather than stacked on top of each other
+    let ex, ey, tries = 0;
+    do {
+      const angle = rand(0, Math.PI*2);
+      const distFromPlayer = rand(140, 220);
+      ex = clamp(player.x + Math.cos(angle)*distFromPlayer, margin, WORLD.w-margin);
+      ey = clamp(player.y + Math.sin(angle)*distFromPlayer, margin, WORLD.h-margin);
+      tries++;
+    } while(enemies.some(o => dist({x:ex,y:ey}, o) < 90) && tries < 12);
+    const e = {
+      x: ex, y: ey, radius: 14, speed: rand(90,170),
+      hp: 500, hpMax: 500,
+      state: special === 'wall-block' ? 'flee' : (Math.random() < 0.5 ? 'patrol' : 'idle'),
+      airborne: { active:false, timer:0, duration:0 },
+      stunTimer: 0, chilled:0, alacritied:0, wallSlow:0,
+      _toB: true
+    };
+    e.patrolA = { x: e.x, y: e.y };
+    e.patrolB = { x: clamp(e.x + rand(-250,250), margin, WORLD.w-margin), y: clamp(e.y + rand(-150,150), margin, WORLD.h-margin) };
+    enemies.push(e);
+  }
+}
+
+function startScenario(template){
+  currentTemplate = template;
+  scenario = {
+    title: template.title, desc: template.desc,
+    sequence: template.sequence.slice(), progress: 0,
+    time: template.time, timeLeft: template.time,
+    special: template.special, active: true,
+    minHits: template.minHits || 1,
+    positionGoal: null
+  };
+
+  // reset player
+  player.x = WORLD.w/2; player.y = WORLD.h/2;
+  player.moveTarget = null;
+  player.speed = rand(110, 155);
+  player.orbLevels = { q: randInt(1,7), w: randInt(1,7), e: randInt(1,7) };
+  player.invokeLevel = randInt(1,5);
+  player.orbQueue = [];
+  player.slots = [null, null];
+  player.cooldowns = {};
+  player.reinvokeCd = 0;
+  player.manaMax = 250 + player.orbLevels.q * 15;
+  player.mana = player.manaMax;
+  player.hp = player.hpMax = 600;
+  player.invisible = false;
+  player.buffs = {};
+  targetingSpell = null;
+
+  effects = [];
+  allies = [];
+  moveClicks = [];
+
+  spawnEnemy(template.special, template.enemyCount || 1);
+
+  if(template.positionGoal){
+    const anchor = enemies[0] || player;
+    const margin = 70;
+    const a = rand(0, Math.PI*2);
+    const r = rand(130, 230);
+    const gx = clamp(anchor.x + Math.cos(a)*r, margin, WORLD.w-margin);
+    const gy = clamp(anchor.y + Math.sin(a)*r, margin, WORLD.h-margin);
+    scenario.positionGoal = Object.assign({}, template.positionGoal, { x: gx, y: gy, satisfied: false });
+  }
+
+  updateCamera();
+  updateObjectiveUI();
+  log(`New scenario: ${scenario.title} — ${scenario.desc}`);
+}
+
+function updateObjectiveUI(){
+  document.getElementById('objTitle').textContent = scenario.title;
+  document.getElementById('objDesc').textContent = scenario.desc;
+  const chips = document.getElementById('chips');
+  chips.innerHTML = scenario.sequence.map((k,i)=>{
+    const s = SPELLS[k];
+    const cls = i < scenario.progress ? 'chip done' : (i === scenario.progress ? 'chip active' : 'chip');
+    const mark = i < scenario.progress ? '✔ ' : '';
+    const hitTag = (scenario.minHits && scenario.minHits > 1) ? ` ×${scenario.minHits}` : '';
+    return `<div class="${cls}">${mark}${s.icon} ${s.name}<small>${s.combo}${hitTag}</small></div>`;
+  }).join('');
+  const posEl = document.getElementById('positionStatus');
+  if(scenario.positionGoal){
+    posEl.style.display = '';
+    posEl.style.color = scenario.positionGoal.satisfied ? '#6adf8e' : '#e0c05a';
+    posEl.textContent = scenario.positionGoal.satisfied
+      ? '📍 In position — continue the combo!'
+      : `📍 Move to the marked spot${scenario.positionGoal.requireInvisible ? ' while invisible (Ghost Walk)' : ''} before continuing.`;
+  } else {
+    posEl.style.display = 'none';
+  }
+}
+
+function updatePositionGoal(){
+  if(!scenario || !scenario.active || !scenario.positionGoal || scenario.positionGoal.satisfied) return;
+  const g = scenario.positionGoal;
+  const invisOk = !g.requireInvisible || player.invisible;
+  if(dist(player, g) < g.radius && invisOk){
+    g.satisfied = true;
+    log(`✔ In position${g.requireInvisible ? ' and hidden' : ''} — continue the combo!`);
+    updateObjectiveUI();
+  }
+}
+
+function requiredHitsFor(spellKey){
+  if(scenario && scenario.active && scenario.sequence[scenario.progress] === spellKey && scenario.minHits) return scenario.minHits;
+  return 1;
+}
+
+function maybeProgressSpell(ef){
+  if(ef.progressed) return;
+  if(ef.hitSet.size >= requiredHitsFor(ef.spellKey)){
+    ef.progressed = true;
+    checkProgress(ef.spellKey, false, ef.hitSet.size);
+  }
+}
+
+function checkProgress(spellKey, silentMiss, hitCount){
+  if(!scenario || !scenario.active) return;
+  if(scenario.sequence[scenario.progress] === spellKey){
+    if(scenario.positionGoal && scenario.positionGoal.requiredBeforeIndex === scenario.progress && !scenario.positionGoal.satisfied){
+      if(!silentMiss) log(`Reach the marked position${scenario.positionGoal.requireInvisible ? ' while invisible' : ''} before continuing the combo.`);
+      return;
+    }
+    scenario.progress++;
+    const hitMsg = hitCount && hitCount > 1 ? ` (hit ${hitCount} enemies!)` : '';
+    log(`✔ ${SPELLS[spellKey].name} landed${hitMsg}! (${scenario.progress}/${scenario.sequence.length})`);
+    updateObjectiveUI();
+    if(scenario.progress >= scenario.sequence.length){
+      completeScenario();
+    }
+  } else if(!silentMiss){
+    log(`${SPELLS[spellKey].name} cast — not the current objective step.`);
+  }
+}
+
+function completeScenario(){
+  scenario.active = false;
+  const bonus = Math.round(scenario.timeLeft * 10) + 100;
+  score += bonus;
+  document.getElementById('scoreText').textContent = score;
+  log(`★ Scenario complete! +${bonus} points`);
+  flashOverlay('COMBO COMPLETE!', '#6adf8e');
+  scheduleAutoAdvance();
+}
+
+function failScenario(){
+  scenario.active = false;
+  log(`✘ Scenario failed — time expired. Hit Retry to try again.`);
+  flashOverlay("TIME'S UP", '#e0553a');
+  scheduleAutoAdvance();
+}
+
+let autoAdvanceTimer = null;
+function cancelAutoAdvance(){
+  if(autoAdvanceTimer){ clearInterval(autoAdvanceTimer); autoAdvanceTimer = null; }
+}
+function scheduleAutoAdvance(seconds){
+  cancelAutoAdvance();
+  let n = seconds || 3;
+  document.getElementById('objDesc').textContent = `Next scenario in ${n}s...`;
+  autoAdvanceTimer = setInterval(()=>{
+    if(mode !== 'combo'){ cancelAutoAdvance(); return; }
+    n--;
+    if(n <= 0){
+      cancelAutoAdvance();
+      startScenario(randomTemplate());
+    } else {
+      document.getElementById('objDesc').textContent = `Next scenario in ${n}s...`;
+    }
+  }, 1000);
+}
+
+/* ---------------------------------------------------------------------
+   Ice Wall Precision drill — separate game mode focused purely on
+   reading enemy position + your own facing to land the wall on top of them.
+--------------------------------------------------------------------- */
+function switchMode(m){
+  mode = m;
+  cancelAutoAdvance();
+  document.getElementById('tabCombo').classList.toggle('active', m === 'combo');
+  document.getElementById('tabIceWall').classList.toggle('active', m === 'icewall');
+  document.getElementById('comboPanel').style.display = m === 'combo' ? '' : 'none';
+  document.getElementById('icewallPanel').style.display = m === 'icewall' ? '' : 'none';
+  targetingSpell = null;
+  pendingReleaseSlot = null;
+  effects = [];
+  if(m === 'icewall'){
+    if(scenario) scenario.active = false;
+    startIceWallDrill();
+  } else {
+    startScenario(currentTemplate || randomTemplate());
+  }
+}
+
+function startIceWallDrill(){
+  iceWallDrill = { attempts:0, hits:0, lastResult:null };
+  updateIceWallUI();
+  log('Ice Wall Precision Drill started — invoke Ice Wall (Q Q E) then cast it on the enemy.');
+  newIceWallAttempt();
+}
+
+function newIceWallAttempt(){
+  effects = effects.filter(ef => ef.type !== 'icewall');
+  allies = [];
+  moveClicks = [];
+  targetingSpell = null;
+
+  const margin = 70;
+  player.x = rand(margin, WORLD.w - margin);
+  player.y = rand(margin, WORLD.h - margin);
+  player.moveTarget = null;
+  player.cooldowns.icewall = 0;
+  player.mana = player.manaMax;
+
+  let ex, ey;
+  do {
+    ex = rand(margin, WORLD.w - margin);
+    ey = rand(margin, WORLD.h - margin);
+  } while(dist({x:ex,y:ey}, player) < 130);
+
+  enemies = [{
+    x: ex, y: ey, radius: 14, speed: 0, hp: 500, hpMax: 500,
+    state: 'idle', airborne: { active:false, timer:0, duration:0 },
+    stunTimer:0, chilled:0, alacritied:0, wallSlow:0
+  }];
+  updateCamera();
+}
+
+function recordIceWallResult(hit){
+  iceWallDrill.attempts++;
+  if(hit) iceWallDrill.hits++;
+  iceWallDrill.lastResult = hit;
+  log(hit ? '✔ Ice Wall landed directly on the hero!' : '✘ Ice Wall missed the hero.');
+  updateIceWallUI();
+  flashOverlay(hit ? 'WALL ON TARGET!' : 'MISSED', hit ? '#6adf8e' : '#e0553a');
+  setTimeout(()=>{ if(mode === 'icewall') newIceWallAttempt(); }, 1400);
+}
+
+function updateIceWallUI(){
+  document.getElementById('iwAttempts').textContent = iceWallDrill.attempts;
+  document.getElementById('iwHits').textContent = iceWallDrill.hits;
+  const acc = iceWallDrill.attempts ? Math.round(iceWallDrill.hits / iceWallDrill.attempts * 100) : 0;
+  document.getElementById('iwAccuracy').textContent = acc + '%';
+  document.getElementById('iwLast').textContent = iceWallDrill.lastResult === null ? '—' : (iceWallDrill.lastResult ? '✔ Hit' : '✘ Miss');
+}
+
+/* ---------------------------------------------------------------------
+   Input handling
+--------------------------------------------------------------------- */
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+canvas.addEventListener('mousedown', evt => {
+  const world = canvasEventToWorld(evt);
+  mouseWorld = world;
+  if(evt.button === 2){ // right click
+    if(targetingSpell){
+      targetingSpell = null;
+      targetingSlot = null;
+      pendingReleaseSlot = null;
+      log('Targeting cancelled.');
+    } else {
+      player.moveTarget = { x: world.x, y: world.y };
+      moveClicks.push({ x: world.x, y: world.y, life: 0.5 });
+    }
+  } else if(evt.button === 0){ // left click
+    if(targetingSpell && targetingSlot !== null && slotCastMode[targetingSlot] === 'normal'){
+      resolveTargetAndCast(targetingSpell, world);
+      targetingSpell = null;
+      targetingSlot = null;
+    }
+  }
+});
+
+canvas.addEventListener('mousemove', evt => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+  mouseScreen.x = (evt.clientX - rect.left) * scaleX;
+  mouseScreen.y = (evt.clientY - rect.top) * scaleY;
+  mouseWorld = screenToWorld(mouseScreen.x, mouseScreen.y);
+});
+
+window.addEventListener('keydown', evt => {
+  const k = evt.key.toLowerCase();
+  if(k === 'q' || k === 'w' || k === 'e'){ addOrb(k); evt.preventDefault(); }
+  else if(k === 'r'){ invoke(); evt.preventDefault(); }
+  else if(k === 'd'){ if(!evt.repeat) startCast(0); evt.preventDefault(); }
+  else if(k === 'f'){ if(!evt.repeat) startCast(1); evt.preventDefault(); }
+  else if(k === 'escape'){ if(targetingSpell){ targetingSpell=null; targetingSlot=null; pendingReleaseSlot=null; log('Targeting cancelled.'); } }
+});
+
+window.addEventListener('keyup', evt => {
+  const k = evt.key.toLowerCase();
+  if(k === 'd') releaseCast(0);
+  else if(k === 'f') releaseCast(1);
+});
+
+document.getElementById('btnQ').onclick = ()=> addOrb('q');
+document.getElementById('btnW').onclick = ()=> addOrb('w');
+document.getElementById('btnE').onclick = ()=> addOrb('e');
+document.getElementById('invokeBtn').onclick = invoke;
+document.getElementById('slotD').addEventListener('mousedown', ()=> startCast(0));
+document.getElementById('slotD').addEventListener('mouseup', ()=> releaseCast(0));
+document.getElementById('slotF').addEventListener('mousedown', ()=> startCast(1));
+document.getElementById('slotF').addEventListener('mouseup', ()=> releaseCast(1));
+document.getElementById('newScenarioBtn').onclick = ()=> { cancelAutoAdvance(); startScenario(randomTemplate()); };
+document.getElementById('retryBtn').onclick = ()=> { cancelAutoAdvance(); if(currentTemplate) startScenario(currentTemplate); };
+document.getElementById('rotationBtn').onclick = ()=> { cancelAutoAdvance(); startScenario(FULL_ROTATION); };
+document.getElementById('tabCombo').onclick = ()=> switchMode('combo');
+document.getElementById('tabIceWall').onclick = ()=> switchMode('icewall');
+document.getElementById('iwNewBtn').onclick = ()=> newIceWallAttempt();
+
+function setSlotCastMode(slotIdx, m){
+  slotCastMode[slotIdx] = m;
+  targetingSpell = null; targetingSlot = null; pendingReleaseSlot = null;
+  updateCastDropdownUI(slotIdx);
+  closeCastDropdowns();
+}
+function updateCastDropdownUI(slotIdx){
+  const dd = document.getElementById(slotIdx===0?'dropdownD':'dropdownF');
+  dd.querySelectorAll('button').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.mode === slotCastMode[slotIdx]);
+  });
+}
+function closeCastDropdowns(){
+  document.getElementById('dropdownD').classList.remove('open');
+  document.getElementById('dropdownF').classList.remove('open');
+}
+function toggleCastDropdown(slotIdx){
+  const id = slotIdx===0?'dropdownD':'dropdownF';
+  const wasOpen = document.getElementById(id).classList.contains('open');
+  closeCastDropdowns();
+  if(!wasOpen) document.getElementById(id).classList.add('open');
+}
+document.getElementById('caretD').addEventListener('click', evt => { evt.stopPropagation(); toggleCastDropdown(0); });
+document.getElementById('caretF').addEventListener('click', evt => { evt.stopPropagation(); toggleCastDropdown(1); });
+document.getElementById('dropdownD').querySelectorAll('button').forEach(btn=>
+  btn.addEventListener('click', evt => { evt.stopPropagation(); setSlotCastMode(0, btn.dataset.mode); }));
+document.getElementById('dropdownF').querySelectorAll('button').forEach(btn=>
+  btn.addEventListener('click', evt => { evt.stopPropagation(); setSlotCastMode(1, btn.dataset.mode); }));
+document.addEventListener('click', closeCastDropdowns);
+updateCastDropdownUI(0);
+updateCastDropdownUI(1);
+
+function addOrb(letter){
+  player.orbQueue.push(letter);
+  if(player.orbQueue.length > 3) player.orbQueue.shift();
+}
+
+function invoke(){
+  if(player.reinvokeCd > 0){ log('Invoke recovering...'); return; }
+  const comboKey = comboKeyFromQueue(player.orbQueue);
+  if(!comboKey){ log('Queue 3 orbs (Q/W/E) first.'); return; }
+  const spellKey = ORB_COMBOS[comboKey];
+  if(!spellKey) return;
+
+  // Real Invoker behaviour: the newly invoked spell always lands in slot D.
+  // Whatever was previously in D gets bumped down into F (or, if the new
+  // spell was already sitting in F, the two simply swap places).
+  if(player.slots[0] !== spellKey){
+    player.slots[1] = player.slots[0];
+    player.slots[0] = spellKey;
+  }
+  player.reinvokeCd = Math.max(0.35, 1.1 - player.invokeLevel * 0.13);
+  log(`Invoked ${SPELLS[spellKey].name} (${comboKey.toUpperCase()}) into slot D.`);
+}
+
+function canCast(key){
+  const meta = SPELLS[key];
+  if((player.cooldowns[key]||0) > 0){ log(`${meta.name} is still on cooldown.`); return false; }
+  if(player.mana < meta.mana){ log(`Not enough mana for ${meta.name}.`); return false; }
+  return true;
+}
+
+// Called on key-down (or icon mousedown) for a D/F slot. Cast behavior (normal
+// click-to-confirm / quick-cast on press / quick-cast on release) is set per
+// slot via the small dropdown under each ability icon, just like in Dota.
+function startCast(slotIdx){
+  const key = player.slots[slotIdx];
+  if(!key){ log('No spell in that slot.'); return; }
+  const meta = SPELLS[key];
+  if(!canCast(key)) return;
+
+  if(meta.cast === 'self'){
+    executeSpell(key, {});
+    return;
+  }
+  const slotMode = slotCastMode[slotIdx];
+  if(slotMode === 'press'){
+    resolveTargetAndCast(key, mouseWorld);
+  } else if(slotMode === 'release'){
+    pendingReleaseSlot = slotIdx;
+    targetingSpell = key; targetingSlot = slotIdx; // show live aim preview while the key/button is held
+    log(`Holding ${meta.name} — release to cast at cursor.`);
+  } else {
+    targetingSpell = key; targetingSlot = slotIdx;
+    log(`Targeting ${meta.name} — click to confirm, right-click/Esc to cancel.`);
+  }
+}
+
+// Called on key-up (or icon mouseup) for a D/F slot — only fires in "release" quick-cast mode.
+function releaseCast(slotIdx){
+  if(slotCastMode[slotIdx] !== 'release' || pendingReleaseSlot !== slotIdx) return;
+  pendingReleaseSlot = null;
+  targetingSpell = null; targetingSlot = null;
+  const key = player.slots[slotIdx];
+  if(key) resolveTargetAndCast(key, mouseWorld);
+}
+
+function resolveTargetAndCast(key, worldPoint){
+  const meta = SPELLS[key];
+  if(meta.cast === 'unit'){
+    let nearest = null, nd = 60;
+    for(const en of enemies){ const d = dist(worldPoint, en); if(d < nd){ nd = d; nearest = en; } }
+    if(!nearest && dist(worldPoint, player) < 60) nearest = player;
+    if(!nearest){ log('No unit near cursor — cast cancelled.'); return; }
+    executeSpell(key, { unit: nearest });
+  } else if(meta.cast === 'point'){
+    let point = worldPoint;
+    if(meta.range){
+      const d = dist(player, worldPoint);
+      if(d > meta.range){
+        const a = angleTo(player, worldPoint);
+        point = { x: player.x + Math.cos(a)*meta.range, y: player.y + Math.sin(a)*meta.range };
+      }
+    }
+    executeSpell(key, { point });
+  }
+}
+
+function executeSpell(key, target){
+  const meta = SPELLS[key];
+  player.mana -= meta.mana;
+  player.cooldowns[key] = meta.cd;
+
+  if(target.point){ player.facing = angleTo(player, target.point); }
+
+  switch(key){
+    case 'coldsnap': {
+      const u = target.unit;
+      u.chilled = 5; log(`Cold Snap marks the target — next hits will stun.`);
+      checkProgress('coldsnap'); break;
+    }
+    case 'ghostwalk': {
+      player.invisible = true; player.buffs.ghostwalk = 5;
+      log('Ghost Walk — vanished and slowed enemies nearby.');
+      checkProgress('ghostwalk'); break;
+    }
+    case 'alacrity': {
+      const u = target.unit; u.alacritied = 6;
+      log('Alacrity grants bonus attack speed and damage.');
+      checkProgress('alacrity'); break;
+    }
+    case 'icewall': {
+      // Wall is centered exactly on the clicked ground point, perpendicular to the
+      // caster->point line, with a real (converted) length and thickness.
+      const a = player.facing + Math.PI/2;
+      const halfLen = meta.length/2;
+      const cx = target.point.x, cy = target.point.y;
+      effects.push({
+        type:'icewall', cx, cy,
+        p1:{ x: cx - Math.cos(a)*halfLen, y: cy - Math.sin(a)*halfLen },
+        p2:{ x: cx + Math.cos(a)*halfLen, y: cy + Math.sin(a)*halfLen },
+        life: 6, hitSet: new Set(), scored:false, spellKey:key
+      });
+      log('Ice Wall raised at the target point, perpendicular to your facing.');
+      break;
+    }
+    case 'forgespirit': {
+      allies.push({ x: target.point.x, y: target.point.y, radius:9, life: 20, speed: 90 });
+      allies.push({ x: target.point.x+20, y: target.point.y+10, radius:9, life: 20, speed: 90 });
+      log('Forge Spirits summoned.');
+      checkProgress('forgespirit'); break;
+    }
+    case 'tornado': {
+      const a = angleTo(player, target.point);
+      effects.push({ type:'tornado', x: player.x, y: player.y, dx: Math.cos(a), dy: Math.sin(a),
+        dist:0, maxDist: meta.range, speed: meta.speed, halfWidth: meta.halfWidth, hitSet: new Set(), spellKey:key });
+      log('Tornado launched.');
+      break;
+    }
+    case 'deafeningblast': {
+      const a = angleTo(player, target.point);
+      effects.push({ type:'deafeningblast', x: player.x, y: player.y, dx: Math.cos(a), dy: Math.sin(a),
+        dist:0, maxDist: meta.range, speed: meta.speed, halfWidth: meta.halfWidth, hitSet: new Set(), spellKey:key });
+      log('Deafening Blast fired.');
+      break;
+    }
+    case 'chaosmeteor': {
+      // Falls from the sky AT the clicked point, then keeps rolling onward
+      // (away from Invoker) instead of originating from the caster.
+      const a = angleTo(player, target.point);
+      effects.push({ type:'chaosmeteor', x: target.point.x, y: target.point.y,
+        dx: Math.cos(a), dy: Math.sin(a), state:'falling', fallTimer:0, fallDelay: meta.fallDelay,
+        rollDist:0, maxRollDist: meta.rollDistance, speed: meta.speed, radius: meta.radius,
+        hitSet: new Set(), spellKey:key });
+      log('Chaos Meteor falls from the sky and begins rolling...');
+      break;
+    }
+    case 'emp': {
+      effects.push({ type:'emp', x: target.point.x, y: target.point.y, timer:0, delay: meta.delay,
+        radius: meta.radius, resolved:false, flash:0, hitSet: new Set(), spellKey:key });
+      log('EMP charging — will pulse shortly.');
+      break;
+    }
+    case 'sunstrike': {
+      effects.push({ type:'sunstrike', x: target.point.x, y: target.point.y, timer:0, delay: meta.delay,
+        radius: meta.radius, resolved:false, flash:0, hitSet: new Set(), spellKey:key });
+      log('Sun Strike incoming from the sky...');
+      break;
+    }
+  }
+  updateHUD();
+}
+
+/* ---------------------------------------------------------------------
+   Effect updaters — return true to keep alive, false to remove
+--------------------------------------------------------------------- */
+function pointToSegmentDist(p, a, b){
+  const abx = b.x-a.x, aby = b.y-a.y;
+  const len2 = abx*abx + aby*aby || 1;
+  let t = ((p.x-a.x)*abx + (p.y-a.y)*aby) / len2;
+  t = clamp(t, 0, 1);
+  const cx = a.x + abx*t, cy = a.y + aby*t;
+  return Math.hypot(p.x-cx, p.y-cy);
+}
+
+const EFFECT_UPDATERS = {
+  tornado(ef, dt){
+    ef.x += ef.dx*ef.speed*dt; ef.y += ef.dy*ef.speed*dt; ef.dist += ef.speed*dt;
+    for(const en of enemies){
+      if(!ef.hitSet.has(en) && dist(ef, en) < en.radius + ef.halfWidth){
+        ef.hitSet.add(en);
+        const lift = clamp(0.3 + ef.dist/1300, 0.3, 3.6);
+        en.airborne = { active:true, timer:0, duration: lift };
+        log(`Tornado hit! Airborne for ${lift.toFixed(1)}s — line up your follow-up now.`);
+        maybeProgressSpell(ef);
+      }
+    }
+    return ef.dist < ef.maxDist;
+  },
+  deafeningblast(ef, dt){
+    ef.x += ef.dx*ef.speed*dt; ef.y += ef.dy*ef.speed*dt; ef.dist += ef.speed*dt;
+    for(const en of enemies){
+      if(!ef.hitSet.has(en) && dist(ef, en) < en.radius + ef.halfWidth){
+        ef.hitSet.add(en);
+        en.stunTimer = Math.max(en.stunTimer, 1.0);
+        en.x += ef.dx*70; en.y += ef.dy*70;
+        log('Deafening Blast knocks the target back and stuns!');
+        maybeProgressSpell(ef);
+      }
+    }
+    return ef.dist < ef.maxDist;
+  },
+  chaosmeteor(ef, dt){
+    if(ef.state === 'falling'){
+      ef.fallTimer += dt;
+      if(ef.fallTimer >= ef.fallDelay) ef.state = 'rolling';
+      return true;
+    }
+    ef.x += ef.dx*ef.speed*dt; ef.y += ef.dy*ef.speed*dt; ef.rollDist += ef.speed*dt;
+    for(const en of enemies){
+      if(!ef.hitSet.has(en) && dist(ef, en) < en.radius + ef.radius){
+        ef.hitSet.add(en);
+        log('Chaos Meteor scorches the target!');
+        maybeProgressSpell(ef);
+      }
+    }
+    return ef.rollDist < ef.maxRollDist;
+  },
+  emp(ef, dt){
+    ef.timer += dt;
+    if(ef.timer < ef.delay) return true;
+    if(!ef.resolved){
+      ef.resolved = true;
+      let hitCount = 0;
+      for(const en of enemies){ if(dist(ef, en) < ef.radius) hitCount++; }
+      const need = requiredHitsFor(ef.spellKey);
+      if(hitCount > 0 && hitCount >= need){
+        log(`EMP pulses, burning mana in the area!${hitCount>1?` (hit ${hitCount} enemies!)`:''}`);
+        checkProgress(ef.spellKey, false, hitCount);
+      } else if(hitCount > 0){
+        log(`EMP pulsed and hit ${hitCount} hero${hitCount>1?'es':''}, but you needed ${need}.`);
+      } else {
+        log('EMP pulsed but found no target in range.');
+      }
+      ef.flash = 0.5;
+    }
+    ef.flash -= dt;
+    return ef.flash > 0;
+  },
+  sunstrike(ef, dt){
+    ef.timer += dt;
+    if(ef.timer < ef.delay) return true;
+    if(!ef.resolved){
+      ef.resolved = true;
+      let hitCount = 0;
+      for(const en of enemies){ if(dist(ef, en) < ef.radius) hitCount++; }
+      const need = requiredHitsFor(ef.spellKey);
+      if(hitCount > 0 && hitCount >= need){
+        log(`☀ Sun Strike lands on target!${hitCount>1?` (hit ${hitCount} enemies!)`:''}`);
+        checkProgress(ef.spellKey, false, hitCount);
+      } else if(hitCount > 0){
+        log(`Sun Strike hit ${hitCount} hero${hitCount>1?'es':''}, but you needed ${need}.`);
+      } else {
+        log('Sun Strike lands — but misses the target.');
+      }
+      ef.flash = 0.4;
+    }
+    ef.flash -= dt;
+    return ef.flash > 0;
+  },
+  icewall(ef, dt){
+    ef.life -= dt;
+    let hitThisFrame = false;
+    for(const en of enemies){
+      const d = pointToSegmentDist(en, ef.p1, ef.p2);
+      if(d < SPELLS.icewall.thickness/2 + en.radius){
+        en.wallSlow = 1.2;
+        hitThisFrame = true;
+        if(!ef.hitSet.has(en)){
+          ef.hitSet.add(en);
+          if(mode === 'combo'){ log('Ice Wall blocks the target\'s path!'); maybeProgressSpell(ef); }
+        }
+      }
+    }
+    if(mode === 'icewall' && !ef.scored){
+      if(hitThisFrame){ ef.scored = true; recordIceWallResult(true); }
+      else if(ef.life <= 0){ ef.scored = true; recordIceWallResult(false); }
+    }
+    return ef.life > 0;
+  }
+};
+
+function updateEffects(dt){
+  for(let i = effects.length-1; i >= 0; i--){
+    const ef = effects[i];
+    const keep = EFFECT_UPDATERS[ef.type](ef, dt);
+    if(!keep) effects.splice(i,1);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Entity updates
+--------------------------------------------------------------------- */
+function updatePlayer(dt){
+  for(const k in player.cooldowns){ if(player.cooldowns[k] > 0) player.cooldowns[k] = Math.max(0, player.cooldowns[k]-dt); }
+  player.reinvokeCd = Math.max(0, player.reinvokeCd - dt);
+  player.mana = Math.min(player.manaMax, player.mana + player.manaRegen*dt);
+
+  if(player.buffs.ghostwalk){
+    player.buffs.ghostwalk -= dt;
+    if(player.buffs.ghostwalk <= 0){ player.buffs.ghostwalk = 0; player.invisible = false; }
+  }
+
+  // facing follows mouse cursor at all times (for aiming ice wall / skillshots)
+  player.facing = angleTo(player, mouseWorld);
+
+  if(player.moveTarget){
+    const d = dist(player, player.moveTarget);
+    const speed = player.speed + player.orbLevels.w*4 + (player.buffs.ghostwalk ? 40 : 0);
+    if(d < 4){ player.moveTarget = null; }
+    else {
+      const a = angleTo(player, player.moveTarget);
+      player.x += Math.cos(a) * speed * dt;
+      player.y += Math.sin(a) * speed * dt;
+    }
+  }
+  player.x = clamp(player.x, player.radius, WORLD.w - player.radius);
+  player.y = clamp(player.y, player.radius, WORLD.h - player.radius);
+}
+
+function updateEnemy(en, dt){
+  if(en.chilled > 0) en.chilled -= dt;
+  if(en.alacritied > 0) en.alacritied -= dt;
+  if(en.wallSlow > 0) en.wallSlow -= dt;
+
+  if(en.airborne.active){
+    en.airborne.timer += dt;
+    if(en.airborne.timer >= en.airborne.duration){
+      en.airborne.active = false;
+      en.stunTimer = Math.max(en.stunTimer, 0.3);
+    }
+    return;
+  }
+  if(en.stunTimer > 0){ en.stunTimer -= dt; return; }
+
+  let speed = en.speed * (en.wallSlow > 0 ? 0.35 : 1);
+  if(en.state === 'flee'){
+    const a = angleTo(player, en) ; // away from player
+    en.x += Math.cos(a) * speed * dt;
+    en.y += Math.sin(a) * speed * dt;
+  } else if(en.state === 'patrol'){
+    const tgt = en._toB ? en.patrolB : en.patrolA;
+    const d = dist(en, tgt);
+    if(d < 8) en._toB = !en._toB;
+    else {
+      const a = angleTo(en, tgt);
+      en.x += Math.cos(a) * speed * dt;
+      en.y += Math.sin(a) * speed * dt;
+    }
+  }
+  en.x = clamp(en.x, en.radius, WORLD.w - en.radius);
+  en.y = clamp(en.y, en.radius, WORLD.h - en.radius);
+}
+
+function updateAllies(dt){
+  for(let i = allies.length-1; i>=0; i--){
+    const a = allies[i];
+    a.life -= dt;
+    let nearest = null, nd = Infinity;
+    for(const en of enemies){ const d = dist(a,en); if(d<nd){nd=d;nearest=en;} }
+    if(nearest && nd > 40){
+      const ang = angleTo(a, nearest);
+      a.x += Math.cos(ang)*a.speed*dt;
+      a.y += Math.sin(ang)*a.speed*dt;
+    }
+    if(a.life <= 0) allies.splice(i,1);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Main loop
+--------------------------------------------------------------------- */
+let lastTime = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - lastTime)/1000);
+  lastTime = now;
+  update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+function update(dt){
+  updatePlayer(dt);
+  for(const en of enemies) updateEnemy(en, dt);
+  updateAllies(dt);
+  updateEffects(dt);
+  for(let i = moveClicks.length-1; i>=0; i--){ moveClicks[i].life -= dt; if(moveClicks[i].life<=0) moveClicks.splice(i,1); }
+  updateCamera();
+  updatePositionGoal();
+
+  if(scenario && scenario.active){
+    scenario.timeLeft -= dt;
+    if(scenario.timeLeft <= 0){ scenario.timeLeft = 0; failScenario(); }
+  }
+  updateHUD();
+}
+
+/* ---------------------------------------------------------------------
+   HUD
+--------------------------------------------------------------------- */
+function updateHUD(){
+  document.getElementById('lvlQ').textContent = player.orbLevels.q;
+  document.getElementById('lvlW').textContent = player.orbLevels.w;
+  document.getElementById('lvlE').textContent = player.orbLevels.e;
+  document.getElementById('lvlR').textContent = player.invokeLevel;
+
+  const buf = document.getElementById('orbBuffer');
+  buf.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const letter = player.orbQueue[player.orbQueue.length-3+i];
+    const div = document.createElement('div');
+    div.className = 'buf-slot' + (letter ? ' '+letter : '');
+    buf.appendChild(div);
+  }
+
+  [0,1].forEach(idx=>{
+    const el = document.getElementById(idx===0?'slotD':'slotF');
+    const key = player.slots[idx];
+    if(!key){ el.className = 'spell-slot empty'; el.innerHTML = `<span class="key">${idx===0?'D':'F'}</span>`; return; }
+    const meta = SPELLS[key];
+    const cd = player.cooldowns[key] || 0;
+    const pct = cd>0 ? (cd/meta.cd*100) : 0;
+    el.className = 'spell-slot';
+    el.innerHTML = `<span class="key">${idx===0?'D':'F'}</span>${meta.icon}<div class="cdfill" style="height:${pct}%"></div>${cd>0?`<span class="cdtext">${cd.toFixed(1)}</span>`:''}`;
+    el.title = `${meta.name} (${meta.combo})`;
+  });
+
+  document.getElementById('hpFill').style.width = (player.hp/player.hpMax*100)+'%';
+  document.getElementById('hpText').textContent = `${Math.round(player.hp)}/${player.hpMax}`;
+  document.getElementById('manaFill').style.width = (player.mana/player.manaMax*100)+'%';
+  document.getElementById('manaText').textContent = `${Math.round(player.mana)}/${Math.round(player.manaMax)}`;
+  document.getElementById('speedText').textContent = `Move Speed: ${Math.round(player.speed + player.orbLevels.w*4)}`;
+
+  if(scenario){
+    document.getElementById('timerText').textContent = scenario.active ? Math.ceil(scenario.timeLeft)+'s' : '--';
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Rendering
+--------------------------------------------------------------------- */
+function drawGrid(){
+  ctx.fillStyle = '#0f1720';
+  ctx.fillRect(0,0,VIEW.w,VIEW.h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+  ctx.lineWidth = 1;
+  const step = 100;
+  const originX = -(camera.x - VIEW.w/2) % step;
+  const originY = -(camera.y - VIEW.h/2) % step;
+  for(let x = originX; x < VIEW.w; x += step){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,VIEW.h); ctx.stroke(); }
+  for(let y = originY; y < VIEW.h; y += step){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(VIEW.w,y); ctx.stroke(); }
+
+  // world bounds
+  const tl = worldToScreen(0,0), br = worldToScreen(WORLD.w, WORLD.h);
+  ctx.strokeStyle = 'rgba(216,180,102,0.35)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(tl.x, tl.y, br.x-tl.x, br.y-tl.y);
+}
+
+function drawMoveClicks(){
+  for(const m of moveClicks){
+    const s = worldToScreen(m.x, m.y);
+    const alpha = clamp(m.life/0.5, 0, 1);
+    ctx.strokeStyle = `rgba(120,220,140,${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 10*(1.4-alpha)+4, 0, Math.PI*2); ctx.stroke();
+  }
+}
+
+function drawPositionGoal(){
+  if(!scenario || !scenario.active || !scenario.positionGoal || scenario.positionGoal.satisfied) return;
+  const g = scenario.positionGoal;
+  const s = worldToScreen(g.x, g.y);
+  const pulse = 0.5 + 0.5*Math.sin(performance.now()/220);
+  ctx.strokeStyle = `rgba(230,200,90,${0.5+0.4*pulse})`;
+  ctx.setLineDash([5,4]); ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(s.x, s.y, g.radius, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '18px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('📍', s.x, s.y);
+}
+
+function drawEffects(){
+  for(const ef of effects){
+    if(ef.type === 'icewall'){
+      const p1 = worldToScreen(ef.p1.x, ef.p1.y), p2 = worldToScreen(ef.p2.x, ef.p2.y);
+      ctx.strokeStyle = `rgba(150,230,255,${clamp(ef.life/6,0.25,1)})`;
+      ctx.lineWidth = SPELLS.icewall.thickness;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+      ctx.lineCap = 'butt';
+    } else if(ef.type === 'tornado' || ef.type === 'deafeningblast'){
+      const s = worldToScreen(ef.x, ef.y);
+      const meta = SPELLS[ef.spellKey];
+      ctx.fillStyle = meta.color;
+      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.fill();
+      ctx.font = '16px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(meta.icon, s.x, s.y);
+    } else if(ef.type === 'chaosmeteor'){
+      const s = worldToScreen(ef.x, ef.y);
+      const meta = SPELLS[ef.spellKey];
+      if(ef.state === 'falling'){
+        const prog = ef.fallTimer/ef.fallDelay;
+        ctx.strokeStyle = meta.color;
+        ctx.setLineDash([6,4]); ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(224,85,58,0.22)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius*prog, 0, Math.PI*2); ctx.fill();
+        ctx.font = '22px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(meta.icon, s.x, s.y - ef.radius - 16);
+      } else {
+        ctx.fillStyle = 'rgba(224,85,58,0.32)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,150,110,0.8)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.font = '20px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(meta.icon, s.x, s.y);
+      }
+    } else if(ef.type === 'emp' || ef.type === 'sunstrike'){
+      const s = worldToScreen(ef.x, ef.y);
+      const meta = SPELLS[ef.spellKey];
+      if(!ef.resolved){
+        const prog = ef.timer/ef.delay;
+        ctx.strokeStyle = meta.color;
+        ctx.setLineDash([6,4]);
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius, 0, Math.PI*2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius*prog, 0, Math.PI*2); ctx.fill();
+        ctx.font = '20px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(meta.icon, s.x, s.y - ef.radius - 14);
+      } else {
+        ctx.fillStyle = `rgba(255,220,140,${clamp(ef.flash/0.5,0,1)})`;
+        ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius*1.1, 0, Math.PI*2); ctx.fill();
+      }
+    }
+  }
+}
+
+function drawAllies(){
+  for(const a of allies){
+    const s = worldToScreen(a.x, a.y);
+    ctx.fillStyle = '#e08a3a';
+    ctx.beginPath(); ctx.arc(s.x, s.y, a.radius, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawUnit(u, opts){
+  const s = worldToScreen(u.x, u.y);
+  ctx.save();
+  if(opts.alpha) ctx.globalAlpha = opts.alpha;
+
+  // ground shadow (offset when airborne to convey lift)
+  const liftOffset = (u.airborne && u.airborne.active)
+    ? Math.sin(Math.PI * clamp(u.airborne.timer/u.airborne.duration,0,1)) * 42
+    : 0;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath(); ctx.ellipse(s.x, s.y+2, u.radius*0.9, u.radius*0.4, 0, 0, Math.PI*2); ctx.fill();
+
+  const drawY = s.y - liftOffset;
+  ctx.fillStyle = opts.color;
+  ctx.beginPath(); ctx.arc(s.x, drawY, u.radius, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  if(opts.facing !== undefined){
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(s.x, drawY);
+    ctx.lineTo(s.x + Math.cos(opts.facing)*(u.radius+14), drawY + Math.sin(opts.facing)*(u.radius+14));
+    ctx.stroke();
+    // arrow head
+    const ax = s.x + Math.cos(opts.facing)*(u.radius+14), ay = drawY + Math.sin(opts.facing)*(u.radius+14);
+    ctx.beginPath();
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(ax - Math.cos(opts.facing-0.4)*8, ay - Math.sin(opts.facing-0.4)*8);
+    ctx.lineTo(ax - Math.cos(opts.facing+0.4)*8, ay - Math.sin(opts.facing+0.4)*8);
+    ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill();
+  }
+
+  // hp bar
+  if(opts.hpMax){
+    const w = 32, h = 4;
+    ctx.fillStyle = '#222'; ctx.fillRect(s.x-w/2, drawY-u.radius-12, w, h);
+    ctx.fillStyle = opts.hpColor || '#4caf6b';
+    ctx.fillRect(s.x-w/2, drawY-u.radius-12, w*clamp(u.hp/opts.hpMax,0,1), h);
+  }
+
+  if(opts.label){
+    ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(opts.label, s.x, drawY - u.radius - 16);
+  }
+
+  // status icons
+  let statusX = s.x - 18;
+  const statusY = drawY + u.radius + 14;
+  if(u.chilled > 0){ ctx.font='12px sans-serif'; ctx.fillText('❄️', statusX, statusY); statusX += 16; }
+  if(u.alacritied > 0){ ctx.font='12px sans-serif'; ctx.fillText('✨', statusX, statusY); statusX += 16; }
+  if(u.airborne && u.airborne.active){ ctx.font='12px sans-serif'; ctx.fillText('🌪️', statusX, statusY); }
+
+  ctx.restore();
+}
+
+function drawTargeting(){
+  if(!targetingSpell) return;
+  const meta = SPELLS[targetingSpell];
+  let point = mouseWorld;
+  if(meta.range){
+    const d = dist(player, mouseWorld);
+    if(d > meta.range){
+      const a = angleTo(player, mouseWorld);
+      point = { x: player.x + Math.cos(a)*meta.range, y: player.y + Math.sin(a)*meta.range };
+    }
+  }
+  const ps = worldToScreen(player.x, player.y);
+  const s = worldToScreen(point.x, point.y);
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.setLineDash([5,5]); ctx.lineWidth = 1.5;
+
+  if(meta.cast === 'unit'){
+    ctx.setLineDash([]);
+    ctx.strokeStyle = '#f2c94c';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 26, 0, Math.PI*2); ctx.stroke();
+  } else if(targetingSpell === 'icewall'){
+    const a = player.facing + Math.PI/2;
+    const halfLen = meta.length/2;
+    const p1 = worldToScreen(point.x - Math.cos(a)*halfLen, point.y - Math.sin(a)*halfLen);
+    const p2 = worldToScreen(point.x + Math.cos(a)*halfLen, point.y + Math.sin(a)*halfLen);
+    ctx.setLineDash([]);
+    ctx.strokeStyle = 'rgba(150,230,255,0.85)'; ctx.lineWidth = meta.thickness;
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+    ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
+  } else if(meta.radius){
+    ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = meta.color;
+    ctx.beginPath(); ctx.arc(s.x, s.y, meta.radius, 0, Math.PI*2); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = meta.color;
+    ctx.beginPath(); ctx.arc(s.x, s.y, meta.halfWidth || 8, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.setLineDash([]);
+}
+
+function render(){
+  drawGrid();
+  drawPositionGoal();
+  drawMoveClicks();
+  drawEffects();
+  drawAllies();
+
+  for(const en of enemies){
+    drawUnit(en, { color:'#c0392b', hpMax:en.hpMax, label:'Enemy Hero' });
+  }
+  drawUnit(player, { color: player.invisible ? 'rgba(90,140,220,0.4)':'#2f6fd6', alpha: player.invisible?0.55:1,
+    facing: player.facing, hpMax: player.hpMax, hpColor:'#3fae55', label:'Invoker' });
+
+  drawTargeting();
+}
+
+/* ---------------------------------------------------------------------
+   Boot
+--------------------------------------------------------------------- */
+startScenario(randomTemplate());
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
