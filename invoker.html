@@ -6,7 +6,7 @@
 <title>Invoker Combo Trainer</title>
 <style>
   :root{
-    --quas:#3aa0e0; --wex:#e8c94a; --exort:#e0553a;
+    --quas:#3aa0e0; --wex:#8e5fe0; --exort:#e8c94a;
     --bg:#0e1116; --panel:#171c24; --panel-border:#333c4a; --gold:#d8b466;
   }
   *{box-sizing:border-box;}
@@ -30,31 +30,34 @@
   .chip.active{opacity:1;border-color:var(--gold);box-shadow:0 0 6px rgba(216,180,102,.4);}
   .chip.done{opacity:.85;border-color:#4caf6b;color:#8ee3a6;}
   #canvas-wrap{position:relative;line-height:0;border:2px solid #333c4a;border-radius:6px;overflow:hidden;background:#0a0d12;}
-  #game{width:100%;height:auto;display:block;cursor:crosshair;}
+  #game{width:100%;height:auto;display:block;cursor:crosshair;touch-action:none;}
   #overlay-msg{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:34px;font-weight:700;text-shadow:0 2px 8px #000;opacity:0;transition:opacity .2s;}
   #hint-bar{position:absolute;bottom:4px;left:8px;font-size:11px;color:#9aa5b5;background:rgba(0,0,0,.35);padding:3px 7px;border-radius:4px;pointer-events:none;}
-  #hud-bottom{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
-  .orb-group{display:flex;align-items:center;gap:6px;}
-  .orb-btn{position:relative;width:42px;height:42px;border-radius:6px;border:2px solid #333c4a;font-weight:700;font-size:16px;cursor:pointer;color:#0a0d12;}
-  .orb-btn.quas{background:var(--quas);} .orb-btn.wex{background:var(--wex);} .orb-btn.exort{background:var(--exort);}
+  /* Two rows that mimic a physical keyboard's QWERTY stagger: top row is
+     Q/W/E/R, bottom row is A/S/D/F, each row's 4 buttons share the row
+     width equally (flex:1, capped by max-width) so nothing can ever
+     overflow a narrow screen, and the bottom row is nudged right with a
+     PERCENTAGE padding (never a fixed px) for the same overflow-safety. */
+  #hud-bottom{display:flex;flex-direction:column;gap:6px;}
+  .hud-row{display:flex;align-items:flex-start;justify-content:center;gap:6px;}
+  .hud-row-bottom{padding-left:14%;}
+  .hud-row > *{flex:1 1 0;max-width:64px;min-width:0;aspect-ratio:1;box-sizing:border-box;}
+  .orb-btn{position:relative;border-radius:6px;border:2px solid #333c4a;font-weight:700;font-size:16px;cursor:pointer;color:#0a0d12;}
+  .orb-btn.quas{background:var(--quas);} .orb-btn.wex{background:var(--wex);color:#fff;} .orb-btn.exort{background:var(--exort);}
   .orb-btn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
-  #orbBuffer{display:flex;gap:3px;margin-left:4px;}
-  .buf-slot{width:16px;height:16px;border-radius:3px;background:#222a35;border:1px solid #3a4556;}
-  .buf-slot.q{background:var(--quas);} .buf-slot.w{background:var(--wex);} .buf-slot.e{background:var(--exort);}
-  #invokeBtn{width:56px;height:42px;border-radius:6px;background:#4b3f7a;border:2px solid #6a58ad;color:#f0e9ff;font-weight:700;font-size:13px;cursor:pointer;position:relative;}
+  #invokeBtn{border-radius:6px;background:#4b3f7a;border:2px solid #6a58ad;color:#f0e9ff;font-weight:700;font-size:13px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;}
   #invokeBtn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
-  .spell-slot{position:relative;width:52px;height:52px;border-radius:6px;background:#1c222c;border:2px solid #3a4556;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer;overflow:hidden;color:#dfe4ea;}
+  #invokeBtn small{font-size:8px;color:#cfc2ec;font-weight:400;}
+  .action-btn{border-radius:6px;border:2px solid #3a4556;background:#232b38;color:#dfe4ea;font-weight:700;font-size:16px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;}
+  .action-btn small{font-size:8px;color:#9aa5b5;font-weight:400;}
+  .action-btn.attack{border-color:#c0392b;}
+  .action-btn.stop{border-color:#8b95a5;}
+  .spell-slot{position:relative;width:100%;height:100%;border-radius:6px;background:#1c222c;border:2px solid #3a4556;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;cursor:pointer;overflow:hidden;color:#dfe4ea;}
   .spell-slot .key{position:absolute;top:1px;left:3px;font-size:10px;color:#8b95a5;}
   .spell-slot .cdfill{position:absolute;bottom:0;left:0;width:100%;background:rgba(0,0,0,.72);height:0%;}
   .spell-slot .cdtext{position:absolute;font-size:12px;font-weight:700;color:#fff;z-index:2;}
   .spell-slot.empty{opacity:.35;}
-  #bars{display:flex;flex-direction:column;gap:4px;min-width:150px;}
-  .bar{position:relative;height:12px;border-radius:3px;background:#222a35;border:1px solid #3a4556;overflow:hidden;}
-  .bar .fill{height:100%;}
-  .bar.hp .fill{background:#3fae55;}
-  .bar.mana .fill{background:#3a7fe0;}
-  .bar span{position:absolute;top:-1px;right:4px;font-size:9px;color:#fff;text-shadow:0 1px 2px #000;}
-  #speedText{font-size:11px;color:#9aa5b5;}
+  #speedText{font-size:11px;color:#9aa5b5;text-align:center;}
   .slot-wrap{position:relative;}
   .cast-caret{position:absolute;bottom:-1px;right:-1px;width:14px;height:12px;background:#232b38;border:1px solid #3a4556;border-radius:0 0 4px 0;font-size:8px;line-height:11px;text-align:center;cursor:pointer;color:#9aa5b5;z-index:3;}
   .cast-caret:hover{background:#2c3648;color:#dfe4ea;}
@@ -73,15 +76,112 @@
   #log{height:96px;overflow-y:auto;background:#0b0e13;border:1px solid #333c4a;border-radius:6px;padding:5px 8px;font-family:Consolas,Monaco,monospace;font-size:11.5px;color:#9fb0c3;}
   #log div{padding:1px 0;}
   footer{font-size:11px;color:#5b6472;text-align:center;padding:4px 0 10px;}
+
+  /* --- Mobile / touch controls + responsive layout --------------------- */
+  #topBar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  #fullscreenBtn{background:#232b38;color:#dfe4ea;border:1px solid #3a4556;border-radius:5px;padding:6px 10px;font-size:12.5px;cursor:pointer;white-space:nowrap;}
+  #fullscreenBtn:hover{background:#2c3648;}
+  #streakStat b{color:var(--gold);}
+
+  /* Touch/narrow-screen layout: there is only ONE set of Q/W/E/R/D/F
+     controls (the #hud-bottom orb/invoke/spell-slot buttons also used on
+     desktop) — they just get bigger tap targets here instead of a second,
+     duplicate row of on-screen buttons. Also strip the UI down to only
+     what's needed to actually play (canvas, objective/timer, HUD), same
+     as fullscreen mode, since a phone screen can't spare the extra chrome;
+     mode tabs stay visible/untouched so you can still switch drills. */
+  @media (pointer: coarse), (max-width: 820px){
+    #hint-bar{display:none;}
+    h1{display:none;}
+    #controls{display:none;}
+    #endlessControls{display:none;}
+    #log{display:none;}
+    footer{display:none;}
+    .hud-row > *{max-width:76px;}
+    .orb-btn, .action-btn{font-size:18px;}
+    #invokeBtn{font-size:14px;}
+    .spell-slot{font-size:24px;}
+    .orb-btn, #invokeBtn, .action-btn, .spell-slot, .cast-caret{
+      touch-action:manipulation;-webkit-user-select:none;user-select:none;
+    }
+  }
+  @media (max-width: 820px){
+    #app{max-width:100%;margin:4px auto;padding:0 4px;gap:6px;}
+    .panel{padding:6px 8px;}
+    #guideList{max-height:300px;}
+    #hud-bottom{gap:8px;}
+    .tab-btn{padding:5px 8px;font-size:11.5px;}
+  }
+  /* When the page itself is fullscreened, let the app stretch to fill it,
+     and strip the UI down to only what's needed to actually play: the
+     canvas, the on-screen tap controls, the objective/progress readout, and
+     the ability/orb HUD. Chrome like the page title, mode tabs, the
+     keyboard hint text, manual "New Scenario"/"Retry"/"New Position"
+     buttons (progress already auto-advances on its own), the scrolling
+     event log, and the footer disclaimer all disappear. */
+  #app:fullscreen, #app:-webkit-full-screen{max-width:100%;height:100%;justify-content:center;}
+  #app:fullscreen h1, #app:-webkit-full-screen h1,
+  #app:fullscreen #modeTabs, #app:-webkit-full-screen #modeTabs,
+  #app:fullscreen #hint-bar, #app:-webkit-full-screen #hint-bar,
+  #app:fullscreen #controls, #app:-webkit-full-screen #controls,
+  #app:fullscreen #endlessControls, #app:-webkit-full-screen #endlessControls,
+  #app:fullscreen #log, #app:-webkit-full-screen #log,
+  #app:fullscreen footer, #app:-webkit-full-screen footer{
+    display:none;
+  }
+  #app:fullscreen #topBar, #app:-webkit-full-screen #topBar{
+    min-height:0;
+  }
+  /* The fullscreen toggle itself stays reachable (to exit fullscreen again)
+     but shrinks to a small, low-emphasis corner button parked in the empty
+     bottom-right corner instead of a full toolbar item, so it never
+     overlaps the objective/timer text pinned to the top of the screen. */
+  #app:fullscreen #fullscreenBtn, #app:-webkit-full-screen #fullscreenBtn{
+    position:fixed;bottom:8px;right:8px;top:auto;z-index:50;opacity:.55;
+    font-size:11px;padding:4px 8px;
+  }
+  #app:fullscreen #fullscreenBtn:hover, #app:-webkit-full-screen #fullscreenBtn:hover{
+    opacity:1;
+  }
+  #app:fullscreen #objective-panel, #app:-webkit-full-screen #objective-panel{
+    padding:4px 8px;
+  }
+  /* Real devices/browsers that support it get an actual fullscreen landscape
+     lock via enterFullscreenLandscape() below. iOS Safari has no Fullscreen
+     API for arbitrary elements though, so as a universal fallback that works
+     everywhere with zero permissions, rotate the WHOLE page 90° with CSS
+     whenever the viewport is a touch device still stuck in portrait. This
+     swaps width/height so the rotated box exactly fills the original
+     viewport, giving a real landscape layout regardless of physical
+     orientation or browser API support. */
+  @media (pointer: coarse) and (orientation: portrait){
+    html{overflow:hidden;}
+    body{
+      width:100vh;
+      height:100vw;
+      transform-origin:left top;
+      transform:rotate(90deg);
+      position:absolute;
+      top:0;
+      left:100%;
+      overflow:hidden;
+    }
+  }
 </style>
 </head>
 <body>
 <div id="app">
-  <h1>⚡ Invoker Combo Trainer</h1>
+  <div id="topBar">
+    <h1>⚡ Invoker Combo Trainer</h1>
+    <button id="fullscreenBtn">⛶ Fullscreen</button>
+  </div>
 
   <div id="modeTabs">
     <button class="tab-btn active" id="tabCombo">⚔️ Combo Trainer</button>
     <button class="tab-btn" id="tabIceWall">🧊 Ice Wall Precision</button>
+    <button class="tab-btn" id="tabTap">🎯 Skill Tap</button>
+    <button class="tab-btn" id="tabEndless">🔁 Endless Rotation</button>
+    <button class="tab-btn" id="tabGuide">📖 Combo Guide</button>
   </div>
 
   <div class="panel" id="objective-panel">
@@ -94,11 +194,15 @@
         <div id="objective-stats">
           <div>Time: <b id="timerText">--</b></div>
           <div>Score: <b id="scoreText">0</b></div>
+          <div id="streakStat" style="display:none">Streak: <b id="streakText">0</b></div>
         </div>
         <div id="controls">
           <button class="ctrl" id="newScenarioBtn">🎲 New Scenario</button>
           <button class="ctrl" id="retryBtn">🔁 Retry</button>
           <button class="ctrl" id="rotationBtn">🔟 Full Rotation Drill</button>
+        </div>
+        <div id="endlessControls" style="display:none">
+          <button class="ctrl" id="resetStreakBtn">🔄 Reset Streak</button>
         </div>
       </div>
       <div id="chips"></div>
@@ -123,43 +227,53 @@
     </div>
   </div>
 
+  <div class="panel" id="guidePanel" style="display:none">
+    <div class="title" style="color:var(--gold);font-weight:600;font-size:15px;">Invoker Combo Guide</div>
+    <div class="desc" style="font-size:12.5px;color:#aab3c0;margin:4px 0 8px;">
+      Reference list of common Invoker combos. Abbreviations:
+      <b>CS</b>=Cold Snap, <b>GW</b>=Ghost Walk, <b>IW</b>=Ice Wall, <b>EMP</b>=EMP, <b>TOR</b>=Tornado,
+      <b>ALAC</b>=Alacrity, <b>FS</b>=Forge Spirit, <b>MET</b>=Chaos Meteor, <b>SS</b>=Sun Strike, <b>DB</b>=Deafening Blast, <b>AA</b>=normal attack.
+      Sequences show a common execution order, not a mandatory fixed button-press script — always cast based on what's actually up and in range.
+    </div>
+    <div id="guideList" style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding-right:4px;"></div>
+  </div>
+
   <div id="canvas-wrap">
     <canvas id="game" width="960" height="540"></canvas>
     <div id="overlay-msg"></div>
-    <div id="hint-bar">Right-click: move · Q/W/E: queue orb · R: invoke · D/F: cast slot · Esc: cancel targeting</div>
+    <div id="hint-bar">Right-click: move · Q/W/E: queue orb · R: invoke · A: attack · S: stop · D/F: cast slot · Esc: cancel targeting</div>
   </div>
 
   <div class="panel" id="hud-bottom">
-    <div class="orb-group">
+    <div class="hud-row hud-row-top">
       <button class="orb-btn quas" id="btnQ" data-orb="q">Q<span class="lvl" id="lvlQ">1</span></button>
       <button class="orb-btn wex" id="btnW" data-orb="w">W<span class="lvl" id="lvlW">1</span></button>
       <button class="orb-btn exort" id="btnE" data-orb="e">E<span class="lvl" id="lvlE">1</span></button>
-      <div id="orbBuffer"></div>
+      <button id="invokeBtn">R<span class="lvl" id="lvlR">1</span><small>invoke</small></button>
     </div>
-    <button id="invokeBtn">INVOKE<span class="lvl" id="lvlR">1</span></button>
-    <div class="slot-wrap">
-      <div class="spell-slot empty" id="slotD" data-slot="0"><span class="key">D</span></div>
-      <div class="cast-caret" id="caretD" title="Cast behavior">▾</div>
-      <div class="cast-dropdown" id="dropdownD">
-        <button data-mode="normal">Normal (click)</button>
-        <button data-mode="press">Quick Cast (press)</button>
-        <button data-mode="release">Quick Cast (release)</button>
+    <div class="hud-row hud-row-bottom">
+      <button class="action-btn attack" id="btnAttack">A<small>attack</small></button>
+      <button class="action-btn stop" id="btnStop">S<small>stop</small></button>
+      <div class="slot-wrap">
+        <div class="spell-slot empty" id="slotD" data-slot="0"><span class="key">D</span></div>
+        <div class="cast-caret" id="caretD" title="Cast behavior">▾</div>
+        <div class="cast-dropdown" id="dropdownD">
+          <button data-mode="normal">Normal (click)</button>
+          <button data-mode="press">Quick Cast (press)</button>
+          <button data-mode="release">Quick Cast (release)</button>
+        </div>
+      </div>
+      <div class="slot-wrap">
+        <div class="spell-slot empty" id="slotF" data-slot="1"><span class="key">F</span></div>
+        <div class="cast-caret" id="caretF" title="Cast behavior">▾</div>
+        <div class="cast-dropdown" id="dropdownF">
+          <button data-mode="normal">Normal (click)</button>
+          <button data-mode="press">Quick Cast (press)</button>
+          <button data-mode="release">Quick Cast (release)</button>
+        </div>
       </div>
     </div>
-    <div class="slot-wrap">
-      <div class="spell-slot empty" id="slotF" data-slot="1"><span class="key">F</span></div>
-      <div class="cast-caret" id="caretF" title="Cast behavior">▾</div>
-      <div class="cast-dropdown" id="dropdownF">
-        <button data-mode="normal">Normal (click)</button>
-        <button data-mode="press">Quick Cast (press)</button>
-        <button data-mode="release">Quick Cast (release)</button>
-      </div>
-    </div>
-    <div id="bars">
-      <div class="bar hp"><div class="fill" id="hpFill" style="width:100%"></div><span id="hpText">600/600</span></div>
-      <div class="bar mana"><div class="fill" id="manaFill" style="width:100%"></div><span id="manaText">300/300</span></div>
-      <div id="speedText">Move Speed: --</div>
-    </div>
+    <div id="speedText">Move Speed: --</div>
   </div>
 
   <div class="panel" id="log"></div>
@@ -177,6 +291,11 @@ const VIEW = { w: 960, h: 540 };
 // World is restricted to exactly the visible window — the camera never scrolls,
 // mirroring a fixed Dota-style viewport rather than a free-roam map.
 const WORLD = { w: VIEW.w, h: VIEW.h };
+// Keep units (and their HP bar/name label, which are drawn above their body)
+// fully clear of the screen edge at all times — used both when spawning/
+// placing enemies AND every frame while they patrol/flee, so movement can
+// never walk them closer to the edge than they were ever allowed to spawn.
+const UNIT_MARGIN = 50;
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -218,53 +337,93 @@ function U(units){ return units * PPU; }
 
 const ORB_COMBOS = {
   qqq:'coldsnap', qqw:'ghostwalk', qqe:'icewall',
-  qww:'tornado',  qwe:'emp',      qee:'forgespirit',
-  www:'alacrity', wwe:'deafeningblast', wee:'chaosmeteor', eee:'sunstrike'
+  qww:'tornado',  qwe:'deafeningblast', qee:'forgespirit',
+  www:'emp', wwe:'alacrity', wee:'chaosmeteor', eee:'sunstrike'
 };
 
 const SPELLS = {
-  coldsnap:      { name:'Cold Snap',       icon:'❄️', combo:'QQQ', cast:'unit', cd:6,  mana:70,  color:'#3aa0e0' },
-  ghostwalk:     { name:'Ghost Walk',      icon:'👻', combo:'QQW', cast:'self', cd:9,  mana:65,  color:'#3aa0e0' },
-  // Ice Wall: real length ~700, cast range ~850, wall thickness ~60 (all converted to px via PPU)
-  icewall:       { name:'Ice Wall',        icon:'🧊', combo:'QQE', cast:'point',cd:8,  mana:70,  color:'#5fd0e8',
-                    range: U(850), length: U(700), thickness: U(60) },
-  // Tornado: cast range ~1000, travel speed ~1150 (very fast), path half-width ~100
-  tornado:       { name:'Tornado',         icon:'🌪️', combo:'QWW', cast:'point',cd:10, mana:100, color:'#bcd6e0',
-                    range: U(1000), speed: U(1150), halfWidth: U(100) },
-  // Deafening Blast: cast range ~1000, travel speed ~900, path half-width ~110
-  deafeningblast:{ name:'Deafening Blast', icon:'💥', combo:'WWE', cast:'point',cd:12, mana:150, color:'#c9a7e8',
-                    range: U(1000), speed: U(900), halfWidth: U(110) },
-  forgespirit:   { name:'Forge Spirit',    icon:'🔥', combo:'QEE', cast:'point',cd:14, mana:110, color:'#e08a3a',
-                    range: U(700) },
-  // EMP: cast range ~1000, radius ~650 (one of the biggest AoEs in the game), delay before it pulses
-  emp:           { name:'EMP',             icon:'⚡', combo:'QWE', cast:'point',cd:14, mana:110, color:'#e8c94a',
-                    range: U(1000), delay:2.2, radius: U(650) },
-  alacrity:      { name:'Alacrity',        icon:'✨', combo:'WWW', cast:'unit', cd:5,  mana:60,  color:'#e8c94a' },
+  coldsnap:      { name:'Cold Snap',       icon:'❄️', combo:'QQQ', cast:'unit', cd:3,  mana:70,  color:'#3aa0e0' },
+  ghostwalk:     { name:'Ghost Walk',      icon:'👻', combo:'QQW', cast:'self', cd:3,  mana:65,  color:'#3aa0e0' },
+  // Ice Wall: automatically placed a short distance in front of Invoker along
+  // his current facing (no click-to-target) — real length ~700, thickness ~60
+  // (converted to px via PPU). forwardOffset is a small trainer-tuned raw px
+  // value (not spec-converted) so the wall pops up right in front of Invoker
+  // instead of the real ~250-unit spec distance, which read as too far away.
+  icewall:       { name:'Ice Wall',        icon:'🧊', combo:'QQE', cast:'self',cd:3,  mana:70,  color:'#5fd0e8',
+                    length: U(700), thickness: U(60), forwardOffset: 46 },
+  // Tornado: cast range ~1000, travel speed 1000 (real projectileSpeed=1000, radius=200). The
+  // real 200-unit hit radius renders as an oversized solid blob on this compact 960x540 map, so
+  // the drawn/hit half-width is kept at a smaller trainer-tuned size rather than the raw spec value.
+  tornado:       { name:'Tornado',         icon:'🌪️', combo:'QWW', cast:'point',cd:3, mana:100, color:'#bcd6e0',
+                    range: U(1000), speed: U(1000), halfWidth: U(100) },
+  // Deafening Blast: cast range 1000, travel speed 1100 (real projectileSpeed=1100, startingRadius
+  // 175/endingRadius 225). Same oversized-blob issue as Tornado — half-width kept at a smaller,
+  // trainer-tuned size instead of the raw ~200 spec average.
+  deafeningblast:{ name:'Deafening Blast', icon:'💥', combo:'QWE', cast:'point',cd:3, mana:150, color:'#c9a7e8',
+                    range: U(1000), speed: U(1100), halfWidth: U(110) },
+  // Forge Spirit: no-target spell (like Ice Wall) — summons two Forge Spirits
+  // right in front of Invoker along his current facing, instead of requiring
+  // a ground click. forwardOffset is the same small trainer-tuned raw px
+  // "right in front" distance as Ice Wall (not the real ~300-unit spec value).
+  forgespirit:   { name:'Forge Spirit',    icon:'🔥', combo:'QEE', cast:'self',cd:3, mana:110, color:'#e08a3a',
+                    forwardOffset: 46 },
+  // EMP: cast range 950, radius 675 (one of the biggest AoEs in the game), 2.6s delay before it pulses
+  emp:           { name:'EMP',             icon:'⚡', combo:'WWW', cast:'point',cd:3, mana:110, color:'#e8c94a',
+                    range: U(950), delay:2.6, radius: U(675) },
+  alacrity:      { name:'Alacrity',        icon:'✨', combo:'WWE', cast:'unit', cd:3,  mana:60,  color:'#e8c94a' },
   // Sun Strike: effectively global range, radius ~175, long delay before impact
-  sunstrike:     { name:'Sun Strike',      icon:'☀️', combo:'EEE', cast:'point',cd:7,  mana:140, color:'#f2a33a',
+  sunstrike:     { name:'Sun Strike',      icon:'☀️', combo:'EEE', cast:'point',cd:3, mana:140, color:'#f2a33a',
                     delay:1.7, radius: U(175) },
-  // Chaos Meteor: cast range ~1000, radius ~275, falls from the sky at the target point then
-  // keeps rolling onward (away from Invoker) at ~350 speed for another ~900 units
-  chaosmeteor:   { name:'Chaos Meteor',    icon:'☄️', combo:'WEE', cast:'point',cd:16, mana:150, color:'#e0553a',
-                    range: U(1000), speed: U(350), radius: U(275), fallDelay:0.6, rollDistance: U(900) }
+  // Chaos Meteor: cast range 700, ~1.3s landing delay, then keeps rolling onward
+  // (away from Invoker) at 300 speed for another ~900 units. The real 275-unit
+  // impact radius rendered as a huge solid blob on this compact 960x540 map, so
+  // it's toned down to a trainer-tuned size (still generous enough to hit
+  // grouped enemies) and drawn as a thinner ring instead of a big filled disc.
+  chaosmeteor:   { name:'Chaos Meteor',    icon:'☄️', combo:'WEE', cast:'point',cd:3, mana:150, color:'#e0553a',
+                    range: U(700), speed: U(300), radius: U(200), fallDelay:1.3, rollDistance: U(900) }
 };
 
+// Every scenario chains at least 5 spells (min 5 steps) and, where thematically
+// sensible, spans as many of Invoker's 10 spells as possible rather than just
+// 1-2 — training reps should look like a real combo, not a single button press.
 const SCENARIO_TEMPLATES = [
-  { title:'Tornado Combo', desc:'Lift the target with Tornado, then finish with Sun Strike before they land.', sequence:['tornado','sunstrike'], time:35, enemyCount:2 },
-  { title:'Meteor Setup', desc:'Two heroes are grouped up — Tornado both of them, then roll a Chaos Meteor through the landing zone to hit both again.', sequence:['tornado','chaosmeteor'], time:40, enemyCount:2, minHits:2 },
-  { title:'Pickoff', desc:'Cold Snap to mark them, then Alacrity yourself to chase and proc the stacking stun.', sequence:['coldsnap','alacrity'], time:28, enemyCount:1 },
-  { title:'Lockdown Chain', desc:'Line up both heroes — Tornado to lift them together, then Deafening Blast to knock them both away and stun again on landing.', sequence:['tornado','deafeningblast'], time:35, enemyCount:2, minHits:2 },
-  { title:'Ice Wall Cutoff', desc:'Face their escape route and wall them in before they reach safety.', sequence:['icewall'], time:25, special:'wall-block', enemyCount:1 },
-  { title:'Ghost Ambush', desc:'Ghost Walk to vanish, sneak to the marked position while hidden, then Tornado into Sun Strike.', sequence:['ghostwalk','tornado','sunstrike'], time:50, enemyCount:1,
+  { title:'Full Burst Combo', desc:'Lift with Tornado, drain mana with EMP, time a Sun Strike to land as they hit the ground, then Cold Snap and finish with an auto attack.', sequence:['tornado','emp','sunstrike','coldsnap','attack'], time:55, enemyCount:1 },
+  { title:'Tornado + EMP', desc:'Tornado through both heroes, EMP the landing zone to drain mana, roll a Chaos Meteor through, push them with Deafening Blast, then wall off their retreat with Ice Wall.', sequence:['tornado','emp','chaosmeteor','deafeningblast','icewall'], time:60, enemyCount:2, minHits:2 },
+  { title:'Meteor Setup', desc:'Two heroes are grouped up — Tornado both of them, roll a Chaos Meteor through the landing zone, then Cold Snap, Alacrity, and attack the one still standing.', sequence:['tornado','chaosmeteor','coldsnap','alacrity','attack'], time:55, enemyCount:2, minHits:2 },
+  { title:'Cold Snap Harass', desc:'Lane harassment — mark them with Cold Snap, land an attack to proc the stun, then Alacrity yourself and keep attacking through the chill window.', sequence:['coldsnap','attack','alacrity','attack','attack'], time:30, enemyCount:1 },
+  { title:'Pickoff', desc:'Ghost Walk to close the distance unseen, Cold Snap to mark them, Alacrity yourself to chase them down, then land repeated attacks to proc the stacking stun.', sequence:['ghostwalk','coldsnap','alacrity','attack','attack'], time:40, enemyCount:1 },
+  { title:'Lockdown Chain', desc:'Line up both heroes — Tornado to lift them together, roll a Chaos Meteor through the landing zone, Deafening Blast to push them further along its path, wall off their escape with Ice Wall, then summon Forge Spirits to finish the job.', sequence:['tornado','chaosmeteor','deafeningblast','icewall','forgespirit'], time:65, enemyCount:2, minHits:2 },
+  { title:'Ice Wall + Cold Snap', desc:'Wall off their escape route, mark them with Cold Snap as they\'re stuck, Alacrity yourself, then land repeated attacks to proc the stun and finish them off.', sequence:['icewall','coldsnap','alacrity','attack','attack'], time:40, special:'wall-block', enemyCount:1 },
+  { title:'Ghost Ambush', desc:'Ghost Walk to vanish, sneak to the marked position while hidden, Tornado to lift them, time a Sun Strike to land as they fall, then roll a Chaos Meteor through and Deafening Blast to keep them inside it.', sequence:['ghostwalk','tornado','sunstrike','chaosmeteor','deafeningblast'], time:65, enemyCount:1,
     positionGoal:{ requiredBeforeIndex:1, requireInvisible:true, radius:45 } },
-  { title:'Vanish & Wall', desc:'Ghost Walk to vanish from the gank, then Ice Wall behind you to block the chase.', sequence:['ghostwalk','icewall'], time:28, enemyCount:1 },
-  { title:'Mana Burn', desc:'Catch a pair of high-mana heroes out of position and burn both with a single EMP.', sequence:['emp'], time:25, enemyCount:2, minHits:2 },
-  { title:'Split Push', desc:'Summon Forge Spirits to safely push and clear a lane alone.', sequence:['forgespirit'], time:20, enemyCount:1 },
-  { title:'Max Damage Combo', desc:'The full burst: Cold Snap to slow, Tornado to lift, Deafening Blast to knock further, Chaos Meteor to roll through, Sun Strike to finish.', sequence:['coldsnap','tornado','deafeningblast','chaosmeteor','sunstrike'], time:65, enemyCount:1 },
-  { title:'Double Setup', desc:'Cold Snap them, Tornado to lift, then Sun Strike to finish.', sequence:['coldsnap','tornado','sunstrike'], time:45, enemyCount:1 }
+  { title:'Ice Wall Escape', desc:'Wall off the chase with Ice Wall, Ghost Walk away while they\'re stuck on the other side, Alacrity yourself for extra speed, drop Forge Spirits behind you to slow pursuit, then Tornado anyone who catches up.', sequence:['icewall','ghostwalk','alacrity','forgespirit','tornado'], time:55, enemyCount:1 },
+  { title:'Tornado Escape', desc:'Tornado the pursuer to create separation, Deafening Blast to knock them further back, Cold Snap to mark them in case they close in again, wall off the path with Ice Wall, then Ghost Walk away clean.', sequence:['tornado','deafeningblast','coldsnap','icewall','ghostwalk'], time:55, enemyCount:1 },
+  { title:'EMP + Ice Wall Area Control', desc:'EMP the escape route to threaten mana burn, roll a Chaos Meteor through, Deafening Blast to push them along its path, drop an Ice Wall across the escape route, then time a Sun Strike to punish anyone who stays.', sequence:['emp','chaosmeteor','deafeningblast','icewall','sunstrike'], time:60, enemyCount:2 },
+  { title:'Forge Spirit Pressure', desc:'Summon Forge Spirits for backup, mark the target with Cold Snap, Alacrity yourself, then keep attacking for sustained physical pressure.', sequence:['forgespirit','coldsnap','alacrity','attack','attack'], time:45, enemyCount:1 },
+  { title:'Max Damage Combo', desc:'The full burst: Tornado to lift, EMP to drain mana, Sun Strike timed to land as they fall, Chaos Meteor to roll through, Deafening Blast to push them along its path, Cold Snap to mark them, Alacrity for extra attack speed, then finish with an auto attack.', sequence:['tornado','emp','sunstrike','chaosmeteor','deafeningblast','coldsnap','alacrity','attack'], time:90, enemyCount:1 },
+  { title:'Sun Strike Finisher', desc:'Tornado to lift, Sun Strike timed to land as they hit the ground, roll a Chaos Meteor through, Deafening Blast to keep them inside it, then Cold Snap and attack once they\'re back on the ground.', sequence:['tornado','sunstrike','chaosmeteor','deafeningblast','coldsnap','attack'], time:70, enemyCount:1 }
 ];
-const FULL_ROTATION = { title:'Full Rotation Drill', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE).',
-  sequence:['coldsnap','ghostwalk','icewall','tornado','emp','forgespirit','alacrity','deafeningblast','chaosmeteor','sunstrike'], time:150, enemyCount:2 };
+const FULL_ROTATION = { title:'Full Rotation Drill', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE), then land an auto attack.',
+  sequence:['coldsnap','ghostwalk','icewall','tornado','deafeningblast','forgespirit','emp','alacrity','chaosmeteor','sunstrike','attack'], time:150, enemyCount:2 };
+
+// --- Endless mini-games -------------------------------------------------
+// "Skill Tap": endlessly prompts one random spell (or auto attack) at a
+// time — land/cast it, immediately get a new random prompt, forever. No
+// timer, no failure — pure "how many can you land in a row" reps.
+const SKILL_TAP_KEYS = ['coldsnap','ghostwalk','icewall','tornado','deafeningblast','forgespirit','emp','alacrity','chaosmeteor','sunstrike','attack'];
+let lastTapKey = null;
+function randomSkillTapTemplate(){
+  let key;
+  do { key = choice(SKILL_TAP_KEYS); } while(SKILL_TAP_KEYS.length > 1 && key === lastTapKey);
+  lastTapKey = key;
+  const meta = spellMeta(key);
+  return { title:'Skill Tap', desc:`Land: ${meta.icon} ${meta.name}`, sequence:[key], time:Infinity, enemyCount:2, endless:true };
+}
+// "Endless Rotation": the same logical QQQ→EEE full-spell rotation as the
+// Full Rotation Drill above, but it never ends — completing a lap just
+// starts the next one and bumps the streak counter, for continuous reps.
+const ENDLESS_ROTATION = { title:'Endless Rotation', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE), then land an auto attack — then do it again, forever.',
+  sequence:['coldsnap','ghostwalk','icewall','tornado','deafeningblast','forgespirit','emp','alacrity','chaosmeteor','sunstrike','attack'], time:Infinity, enemyCount:2, endless:true };
 
 function comboKeyFromQueue(queue){
   if(queue.length < 3) return null;
@@ -280,30 +439,41 @@ function comboKeyFromQueue(queue){
 const player = {
   x: WORLD.w/2, y: WORLD.h/2, radius: 14, facing: 0,
   moveTarget: null, speed: 130,
-  hp: 600, hpMax: 600, mana: 300, manaMax: 300, manaRegen: 10,
   orbLevels: {q:1,w:1,e:1}, invokeLevel:1,
   orbQueue: [], slots: [null, null], cooldowns: {}, reinvokeCd: 0,
-  invisible:false, buffs:{}
+  invisible:false, buffs:{},
+  // Invoker is a ranged hero (real attack range 600) — attackRange uses the
+  // same U()/PPU conversion as spell ranges so auto-attack actually reaches
+  // out rather than requiring a melee-style walk-up.
+  attackTarget: null, attackCd: 0, attackRange: U(600), alacritied: 0
 };
 let enemies = [];
 let effects = [];
 let allies = [];
-let moveClicks = []; // fading right-click ping markers
+let moveClicks = []; // fading right-click/left-click move ping markers
+let attackFx = []; // fading auto-attack impact markers
+
+// Display-only metadata for the auto-attack "combo step" — it isn't invoked
+// via orbs like the real spells, so it lives outside SPELLS, but scenario
+// sequences/objective chips/progress messages need a name+icon for it too.
+const ATTACK_META = { name:'Auto Attack', icon:'⚔️' };
+function spellMeta(key){ return key === 'attack' ? ATTACK_META : SPELLS[key]; }
 
 let camera = { x: player.x, y: player.y };
 let mouseScreen = { x: VIEW.w/2, y: VIEW.h/2 };
 let mouseWorld = { x: player.x, y: player.y };
 let targetingSpell = null; // key of spell awaiting a click target (normal / release-hold preview)
 let targetingSlot = null; // which slot (0=D,1=F) is currently targeting, drives per-slot cast mode
-let slotCastMode = ['normal', 'normal']; // per D/F slot: 'normal' | 'press' | 'release'
+let slotCastMode = ['release', 'release']; // per D/F slot: 'normal' | 'press' | 'release'
 let pendingReleaseSlot = null; // slot index waiting for key-up to fire (release quick-cast)
 
 let scenario = null;
 let currentTemplate = null;
 let lastTemplateTitle = null;
 let score = 0;
+let endlessStreak = 0; // lap/rep counter for the 'tap' and 'endless' endless mini-games
 
-let mode = 'combo'; // 'combo' | 'icewall'
+let mode = 'combo'; // 'combo' | 'icewall' | 'tap' | 'endless' | 'guide'
 let iceWallDrill = { attempts:0, hits:0, lastResult:null };
 
 /* ---------------------------------------------------------------------
@@ -365,13 +535,17 @@ function spawnEnemy(special, count){
 }
 
 function startScenario(template){
-  currentTemplate = template;
+  // Don't let the endless mini-game templates (Skill Tap / Endless Rotation)
+  // overwrite currentTemplate — it's only meant to track the last *combo*
+  // scenario (for the Retry button and for resuming Combo Trainer mode).
+  if(!template.endless) currentTemplate = template;
   scenario = {
     title: template.title, desc: template.desc,
     sequence: template.sequence.slice(), progress: 0,
     time: template.time, timeLeft: template.time,
     special: template.special, active: true,
     minHits: template.minHits || 1,
+    endless: !!template.endless,
     positionGoal: null
   };
 
@@ -385,16 +559,17 @@ function startScenario(template){
   player.slots = [null, null];
   player.cooldowns = {};
   player.reinvokeCd = 0;
-  player.manaMax = 250 + player.orbLevels.q * 15;
-  player.mana = player.manaMax;
-  player.hp = player.hpMax = 600;
   player.invisible = false;
   player.buffs = {};
+  player.attackTarget = null;
+  player.attackCd = 0;
+  player.alacritied = 0;
   targetingSpell = null;
 
   effects = [];
   allies = [];
   moveClicks = [];
+  attackFx = [];
 
   spawnEnemy(template.special, template.enemyCount || 1);
 
@@ -418,11 +593,11 @@ function updateObjectiveUI(){
   document.getElementById('objDesc').textContent = scenario.desc;
   const chips = document.getElementById('chips');
   chips.innerHTML = scenario.sequence.map((k,i)=>{
-    const s = SPELLS[k];
+    const s = spellMeta(k);
     const cls = i < scenario.progress ? 'chip done' : (i === scenario.progress ? 'chip active' : 'chip');
     const mark = i < scenario.progress ? '✔ ' : '';
     const hitTag = (scenario.minHits && scenario.minHits > 1) ? ` ×${scenario.minHits}` : '';
-    return `<div class="${cls}">${mark}${s.icon} ${s.name}<small>${s.combo}${hitTag}</small></div>`;
+    return `<div class="${cls}">${mark}${s.icon} ${s.name}${hitTag ? `<small>${hitTag}</small>` : ''}</div>`;
   }).join('');
   const posEl = document.getElementById('positionStatus');
   if(scenario.positionGoal){
@@ -469,24 +644,38 @@ function checkProgress(spellKey, silentMiss, hitCount){
     }
     scenario.progress++;
     const hitMsg = hitCount && hitCount > 1 ? ` (hit ${hitCount} enemies!)` : '';
-    log(`✔ ${SPELLS[spellKey].name} landed${hitMsg}! (${scenario.progress}/${scenario.sequence.length})`);
+    log(`✔ ${spellMeta(spellKey).name} landed${hitMsg}! (${scenario.progress}/${scenario.sequence.length})`);
     updateObjectiveUI();
     if(scenario.progress >= scenario.sequence.length){
       completeScenario();
     }
   } else if(!silentMiss){
-    log(`${SPELLS[spellKey].name} cast — not the current objective step.`);
+    log(`${spellMeta(spellKey).name} ${spellKey === 'attack' ? 'landed' : 'cast'} — not the current objective step.`);
   }
 }
 
 function completeScenario(){
   scenario.active = false;
-  const bonus = Math.round(scenario.timeLeft * 10) + 100;
+  const bonus = Math.round((isFinite(scenario.timeLeft) ? scenario.timeLeft : 30) * 10) + 100;
   score += bonus;
   document.getElementById('scoreText').textContent = score;
   log(`★ Scenario complete! +${bonus} points`);
   flashOverlay('COMBO COMPLETE!', '#6adf8e');
-  scheduleAutoAdvance();
+  if(scenario.endless){
+    endlessStreak++;
+    updateEndlessStreakUI();
+    const modeAtComplete = mode;
+    setTimeout(()=>{
+      if(mode !== modeAtComplete) return;
+      startScenario(mode === 'tap' ? randomSkillTapTemplate() : ENDLESS_ROTATION);
+    }, 450);
+  } else {
+    scheduleAutoAdvance();
+  }
+}
+
+function updateEndlessStreakUI(){
+  document.getElementById('streakText').textContent = endlessStreak;
 }
 
 function failScenario(){
@@ -523,19 +712,105 @@ function scheduleAutoAdvance(seconds){
 function switchMode(m){
   mode = m;
   cancelAutoAdvance();
+  const isComboLike = (m === 'combo' || m === 'tap' || m === 'endless');
   document.getElementById('tabCombo').classList.toggle('active', m === 'combo');
   document.getElementById('tabIceWall').classList.toggle('active', m === 'icewall');
-  document.getElementById('comboPanel').style.display = m === 'combo' ? '' : 'none';
+  document.getElementById('tabTap').classList.toggle('active', m === 'tap');
+  document.getElementById('tabEndless').classList.toggle('active', m === 'endless');
+  document.getElementById('tabGuide').classList.toggle('active', m === 'guide');
+  document.getElementById('objective-panel').style.display = m === 'guide' ? 'none' : '';
+  document.getElementById('comboPanel').style.display = isComboLike ? '' : 'none';
   document.getElementById('icewallPanel').style.display = m === 'icewall' ? '' : 'none';
+  document.getElementById('guidePanel').style.display = m === 'guide' ? '' : 'none';
+  document.getElementById('canvas-wrap').style.display = m === 'guide' ? 'none' : '';
+  document.getElementById('hud-bottom').style.display = m === 'guide' ? 'none' : '';
+  document.getElementById('log').style.display = m === 'guide' ? 'none' : '';
+  // Endless modes ('tap'/'endless') just loop the same mini-game forever —
+  // hide the random-scenario controls (which would yank you into an
+  // unrelated combo scenario) and show a streak counter + reset button instead.
+  document.getElementById('controls').style.display = (m === 'tap' || m === 'endless') ? 'none' : '';
+  document.getElementById('endlessControls').style.display = (m === 'tap' || m === 'endless') ? '' : 'none';
+  document.getElementById('streakStat').style.display = (m === 'tap' || m === 'endless') ? '' : 'none';
   targetingSpell = null;
   pendingReleaseSlot = null;
   effects = [];
-  if(m === 'icewall'){
+  if(m === 'guide'){
+    if(scenario) scenario.active = false;
+    renderComboGuide();
+  } else if(m === 'icewall'){
     if(scenario) scenario.active = false;
     startIceWallDrill();
+  } else if(m === 'tap'){
+    endlessStreak = 0;
+    updateEndlessStreakUI();
+    startScenario(randomSkillTapTemplate());
+  } else if(m === 'endless'){
+    endlessStreak = 0;
+    updateEndlessStreakUI();
+    startScenario(ENDLESS_ROTATION);
   } else {
     startScenario(currentTemplate || randomTemplate());
   }
+}
+
+const COMBO_GUIDE = [
+  { category:'Core Combos', combos:[
+    { name:'Cold Snap Harass', seq:'CS \u2192 AA \u2192 AA \u2192 AA...', purpose:'Lane harassment, interrupt attacks/casts, easy early-game pressure. Keep attacking while Cold Snap is active. Optional: CS \u2192 ALAC \u2192 AA repeatedly.' },
+    { name:'Cold Snap + Forge Spirit', seq:'FS \u2192 CS \u2192 AA (continue attacking with Invoker + Forge Spirit)', purpose:'Sustained single-target pressure, repeated Cold Snap triggers, Forge Spirit\u2019s armor reduction improves continued physical damage. Optional: FS \u2192 CS \u2192 ALAC \u2192 AA.' },
+    { name:'Tornado + EMP', seq:'TOR \u2192 EMP', purpose:'Primary Quas/Wex setup. Time EMP so its explosion lands as close as possible to when the Tornado\u2019d target hits the ground.' },
+    { name:'Tornado + EMP + Cold Snap', seq:'TOR \u2192 EMP \u2192 CS \u2192 AA', purpose:'Drain mana, disable, then transition into sustained attacks. Apply Cold Snap as the enemy becomes attackable rather than wasting its duration while they\u2019re still airborne.' },
+    { name:'Tornado + EMP + Ice Wall', seq:'TOR \u2192 EMP \u2192 move into position \u2192 IW near landing spot \u2192 AA', purpose:'Mana drain, movement control, and prevent escape after the enemy lands.' },
+    { name:'Tornado + Sun Strike', seq:'TOR \u2192 SS', purpose:'Time Sun Strike so its impact lines up with the Tornado\u2019d target\u2019s landing.' },
+    { name:'Tornado + Meteor', seq:'TOR \u2192 MET', purpose:'Time Meteor\u2019s landing to coincide with Tornado\u2019s landing; aim Meteor\u2019s roll along the expected direction of enemy displacement.' },
+    { name:'Tornado + Meteor + Deafening Blast', seq:'TOR \u2192 MET \u2192 DB', purpose:'Classic damage/control chain \u2014 enemy lands, Meteor starts damaging, then Deafening Blast pushes the enemy so they stay inside Meteor\u2019s path.' },
+  ]},
+  { category:'Exort Burst Combos', combos:[
+    { name:'Cold Snap + Meteor', seq:'CS \u2192 MET \u2192 AA', purpose:'Meteor damage repeatedly procs Cold Snap while you keep attacking. Good against a target already close enough that a Tornado setup isn\u2019t needed.' },
+    { name:'Cold Snap + Meteor + Blast', seq:'CS \u2192 MET \u2192 DB \u2192 AA', purpose:'Immediate close-range burst \u2014 Cold Snap control, Meteor damage, Blast displacement. Try to push the enemy along Meteor\u2019s path.' },
+    { name:'Cold Snap + Alacrity', seq:'CS \u2192 ALAC \u2192 AA repeatedly', purpose:'Simple right-click combo \u2014 maximize repeated attacks during Cold Snap when a large spell combo isn\u2019t needed or available.' },
+    { name:'Forge Spirit + Cold Snap + Alacrity', seq:'FS \u2192 CS \u2192 ALAC \u2192 AA repeatedly', purpose:'Strong sustained single-target physical pressure combining Forge Spirit attacks, armor reduction, Alacrity, and repeated Cold Snap triggers.' },
+  ]},
+  { category:'Full Spell Combos', combos:[
+    { name:'Tornado + EMP + Meteor + Blast', seq:'TOR \u2192 EMP \u2192 MET \u2192 DB', purpose:'Synchronize Tornado\u2019s landing, EMP\u2019s explosion, and Meteor\u2019s landing as closely as possible, then follow with Deafening Blast to keep the target inside Meteor\u2019s path.' },
+    { name:'Tornado + EMP + Meteor + Blast + Cold Snap', seq:'TOR \u2192 EMP \u2192 MET \u2192 DB \u2192 CS \u2192 AA', purpose:'Mana drain, burst, and displacement \u2014 Cold Snap becomes the follow-up control once the main sequence completes.' },
+    { name:'Tornado + Sun Strike + Meteor + Blast', seq:'TOR \u2192 SS \u2192 MET \u2192 DB', purpose:'Synchronize Sun Strike\u2019s impact and Meteor\u2019s landing with Tornado\u2019s landing, then push through with Deafening Blast. Timing shifts with your Quas level.' },
+    { name:'Maximum Extended Combo', seq:'TOR \u2192 EMP \u2192 SS \u2192 MET \u2192 DB \u2192 CS \u2192 ALAC \u2192 AA', purpose:'The theoretical \u201ceverything\u201d combo \u2014 not a fixed button script. Whether each spell is actually castable in time depends on invoke cooldown, spell cooldowns, mana, orb levels, distance, and travel/cast timings.' },
+  ]},
+  { category:'Defensive / Escape Combos', combos:[
+    { name:'Tornado Escape', seq:'TOR \u2192 move away \u2192 GW', purpose:'Tornado creates separation; Ghost Walk provides escape/repositioning.' },
+    { name:'Ice Wall Escape', seq:'IW \u2192 move away \u2192 GW', purpose:'Use Ice Wall to make pursuit difficult before entering Ghost Walk.' },
+    { name:'Tornado + Ice Wall Escape', seq:'TOR \u2192 move toward predicted landing area if appropriate \u2192 IW \u2192 retreat', purpose:'The enemy lands into or near the Ice Wall, buying you time to retreat.' },
+  ]},
+  { category:'Chase Combos', combos:[
+    { name:'Tornado Catch', seq:'TOR \u2192 move toward target \u2192 CS \u2192 AA', purpose:'Use Tornado as long-range initiation to close the gap.' },
+    { name:'Tornado + Ice Wall Chase', seq:'TOR \u2192 predict landing position \u2192 move there \u2192 IW \u2192 CS \u2192 AA', purpose:'Only works if you can physically walk to the landing spot before the cyclone ends \u2014 depends on your move speed and Quas-scaled cyclone duration.' },
+  ]},
+  { category:'Close-Range Combo', combos:[
+    { name:'Ice Wall + Cold Snap', seq:'IW \u2192 CS \u2192 AA', purpose:'Very simple close-range control. Optional: IW \u2192 CS \u2192 ALAC \u2192 AA repeatedly.' },
+  ]},
+  { category:'Teamfight Combos', combos:[
+    { name:'Tornado + EMP Teamfight', seq:'TOR through multiple enemies \u2192 EMP at predicted landing area', purpose:'Score by heroes hit by Tornado, heroes caught inside EMP, and total mana burned.' },
+    { name:'Tornado + Meteor + Blast Teamfight', seq:'TOR \u2192 MET along enemy formation \u2192 DB through multiple enemies', purpose:'Score by heroes hit, Meteor overlap time, Blast hits, estimated damage, and control duration.' },
+    { name:'EMP + Ice Wall Area Control', seq:'EMP \u2192 IW across escape route', purpose:'Zoning, not pure damage \u2014 force enemies to choose between staying inside EMP or crossing the Ice Wall.' },
+  ]},
+];
+
+function renderComboGuide(){
+  const el = document.getElementById('guideList');
+  if(el.dataset.built) return;
+  el.dataset.built = '1';
+  let html = '';
+  COMBO_GUIDE.forEach(section=>{
+    html += `<div style="font-weight:700;color:var(--gold);font-size:13px;margin-top:4px;">${section.category}</div>`;
+    section.combos.forEach(c=>{
+      html += `<div style="background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:6px 10px;">
+        <div style="font-weight:600;font-size:12.5px;color:#dfe4ea;">${c.name}</div>
+        <div style="font-family:Consolas,Monaco,monospace;font-size:11.5px;color:#9fd6ea;margin:3px 0;">${c.seq}</div>
+        <div style="font-size:11.5px;color:#aab3c0;">${c.purpose}</div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
 }
 
 function startIceWallDrill(){
@@ -555,8 +830,8 @@ function newIceWallAttempt(){
   player.x = rand(margin, WORLD.w - margin);
   player.y = rand(margin, WORLD.h - margin);
   player.moveTarget = null;
+  player.attackTarget = null;
   player.cooldowns.icewall = 0;
-  player.mana = player.manaMax;
 
   let ex, ey;
   do {
@@ -595,29 +870,104 @@ function updateIceWallUI(){
 --------------------------------------------------------------------- */
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+// Shared by mouse left-click and touch tap — "tapping on screen is
+// equivalent to mouse click": attack-move onto an enemy, or a plain move.
+function handleLeftClickAt(world){
+  if(targetingSpell && targetingSlot !== null && slotCastMode[targetingSlot] === 'normal'){
+    resolveTargetAndCast(targetingSpell, world);
+    targetingSpell = null;
+    targetingSlot = null;
+  } else if(!targetingSpell){
+    let target = null, nd = Infinity;
+    for(const en of enemies){
+      const d = dist(world, en);
+      if(d < en.radius + 12 && d < nd){ nd = d; target = en; }
+    }
+    if(target){
+      player.attackTarget = target;
+      player.moveTarget = null;
+    } else {
+      player.attackTarget = null;
+      player.moveTarget = { x: world.x, y: world.y };
+      moveClicks.push({ x: world.x, y: world.y, life: 0.5 });
+    }
+  }
+}
+
+// 'A' key / on-screen A button — auto-attack the nearest enemy without
+// needing to click on it first, same as attack-clicking it directly.
+function attackNearestEnemy(){
+  let target = null, nd = Infinity;
+  for(const en of enemies){
+    const d = dist(player, en);
+    if(d < nd){ nd = d; target = en; }
+  }
+  if(target){
+    player.attackTarget = target;
+    player.moveTarget = null;
+  } else {
+    log('No enemy to attack.');
+  }
+}
+
+// 'S' key / on-screen S button — Dota-style stop command: cancel movement
+// and attacking, holding position right where the player currently is.
+function stopPlayer(){
+  player.attackTarget = null;
+  player.moveTarget = null;
+}
+
 canvas.addEventListener('mousedown', evt => {
   const world = canvasEventToWorld(evt);
   mouseWorld = world;
-  if(evt.button === 2){ // right click
+  if(evt.button === 2){ // right click — move / cancel targeting
     if(targetingSpell){
       targetingSpell = null;
       targetingSlot = null;
       pendingReleaseSlot = null;
       log('Targeting cancelled.');
     } else {
+      player.attackTarget = null;
       player.moveTarget = { x: world.x, y: world.y };
       moveClicks.push({ x: world.x, y: world.y, life: 0.5 });
     }
   } else if(evt.button === 0){ // left click
-    if(targetingSpell && targetingSlot !== null && slotCastMode[targetingSlot] === 'normal'){
-      resolveTargetAndCast(targetingSpell, world);
-      targetingSpell = null;
-      targetingSlot = null;
-    }
+    // Also usable as a move command (easier on a laptop trackpad, no
+    // right-click needed) — clicking directly on an enemy instead issues
+    // an attack-move order (walk into range, then auto-attack), matching
+    // the standard left-click-to-attack convention.
+    handleLeftClickAt(world);
   }
 });
 
-canvas.addEventListener('mousemove', evt => {
+// Touch input: a single tap on the canvas is equivalent to a left mouse
+// click (move, or attack-move if it lands on an enemy) — there's no touch
+// equivalent of a right-click, so touch relies entirely on left-click-style
+// taps (matches the existing "left-click should also move" behavior).
+canvas.addEventListener('touchstart', evt => {
+  evt.preventDefault();
+  const touch = evt.changedTouches[0];
+  const world = canvasEventToWorld(touch);
+  mouseWorld = world;
+  handleLeftClickAt(world);
+}, { passive:false });
+
+// Keep mouseWorld fresh while a finger drags across the canvas too, so a
+// held D/F quick-cast (release mode) aims at the last touched point rather
+// than a stale position.
+canvas.addEventListener('touchmove', evt => {
+  evt.preventDefault();
+  const touch = evt.touches[0];
+  if(touch) mouseWorld = canvasEventToWorld(touch);
+}, { passive:false });
+
+// Track the cursor at the window level (not just over the canvas) so
+// mouseWorld stays fresh even if the pointer is currently over a UI panel
+// (spell icons, cast-mode dropdown, etc). Without this, quick-cast
+// 'press'/'release' modes could fire at a stale mouseWorld (defaulting to
+// the player's own position) if the key is pressed before the mouse has
+// ever moved over the canvas — making point-target spells look self-cast.
+window.addEventListener('mousemove', evt => {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
   mouseScreen.x = (evt.clientX - rect.left) * scaleX;
@@ -629,6 +979,8 @@ window.addEventListener('keydown', evt => {
   const k = evt.key.toLowerCase();
   if(k === 'q' || k === 'w' || k === 'e'){ addOrb(k); evt.preventDefault(); }
   else if(k === 'r'){ invoke(); evt.preventDefault(); }
+  else if(k === 'a'){ attackNearestEnemy(); evt.preventDefault(); }
+  else if(k === 's'){ stopPlayer(); evt.preventDefault(); }
   else if(k === 'd'){ if(!evt.repeat) startCast(0); evt.preventDefault(); }
   else if(k === 'f'){ if(!evt.repeat) startCast(1); evt.preventDefault(); }
   else if(k === 'escape'){ if(targetingSpell){ targetingSpell=null; targetingSlot=null; pendingReleaseSlot=null; log('Targeting cancelled.'); } }
@@ -644,16 +996,59 @@ document.getElementById('btnQ').onclick = ()=> addOrb('q');
 document.getElementById('btnW').onclick = ()=> addOrb('w');
 document.getElementById('btnE').onclick = ()=> addOrb('e');
 document.getElementById('invokeBtn').onclick = invoke;
-document.getElementById('slotD').addEventListener('mousedown', ()=> startCast(0));
-document.getElementById('slotD').addEventListener('mouseup', ()=> releaseCast(0));
-document.getElementById('slotF').addEventListener('mousedown', ()=> startCast(1));
-document.getElementById('slotF').addEventListener('mouseup', ()=> releaseCast(1));
+document.getElementById('btnAttack').onclick = attackNearestEnemy;
+document.getElementById('btnStop').onclick = stopPlayer;
+// Pointer events (not mousedown/mouseup) so this works uniformly whether
+// played with a mouse or a finger on a touchscreen — one set of listeners
+// covers both instead of needing separate touch-specific handlers.
+document.getElementById('slotD').addEventListener('pointerdown', ()=> startCast(0));
+document.getElementById('slotD').addEventListener('pointerup', ()=> releaseCast(0));
+document.getElementById('slotF').addEventListener('pointerdown', ()=> startCast(1));
+document.getElementById('slotF').addEventListener('pointerup', ()=> releaseCast(1));
 document.getElementById('newScenarioBtn').onclick = ()=> { cancelAutoAdvance(); startScenario(randomTemplate()); };
 document.getElementById('retryBtn').onclick = ()=> { cancelAutoAdvance(); if(currentTemplate) startScenario(currentTemplate); };
 document.getElementById('rotationBtn').onclick = ()=> { cancelAutoAdvance(); startScenario(FULL_ROTATION); };
+document.getElementById('resetStreakBtn').onclick = ()=> {
+  endlessStreak = 0;
+  updateEndlessStreakUI();
+  startScenario(mode === 'tap' ? randomSkillTapTemplate() : ENDLESS_ROTATION);
+};
 document.getElementById('tabCombo').onclick = ()=> switchMode('combo');
 document.getElementById('tabIceWall').onclick = ()=> switchMode('icewall');
+document.getElementById('tabTap').onclick = ()=> switchMode('tap');
+document.getElementById('tabEndless').onclick = ()=> switchMode('endless');
+document.getElementById('tabGuide').onclick = ()=> switchMode('guide');
 document.getElementById('iwNewBtn').onclick = ()=> newIceWallAttempt();
+
+// --- Fullscreen (mobile landscape) ---------------------------------------
+// Q/W/E/R/D/F on mobile are just the same #hud-bottom buttons used on
+// desktop (enlarged via CSS for touch) — no separate duplicate control set.
+function enterFullscreenLandscape(){
+  const el = document.getElementById('app');
+  if(document.fullscreenElement) return Promise.resolve();
+  return (el.requestFullscreen ? el.requestFullscreen() : Promise.resolve())
+    .then(()=> { if(screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); })
+    .catch(()=>{});
+}
+document.getElementById('fullscreenBtn').addEventListener('click', () => {
+  if(!document.fullscreenElement){
+    enterFullscreenLandscape();
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+});
+// Best-effort: on a touch device, automatically go fullscreen + try to lock
+// landscape the first time the player actually taps to play, instead of
+// requiring them to find and press the small manual Fullscreen button first.
+// Fullscreen must be requested from directly inside a real user gesture, so
+// this listens for that first tap rather than firing on page load. Some
+// browsers (notably iOS Safari) don't support the Fullscreen API at all for
+// regular elements — enterFullscreenLandscape() already swallows that via
+// .catch(), and the CSS-only mobile UI minimization above still applies
+// regardless, so those devices still get a decluttered layout either way.
+if(matchMedia('(pointer: coarse)').matches){
+  document.addEventListener('click', enterFullscreenLandscape, { once:true });
+}
 
 function setSlotCastMode(slotIdx, m){
   slotCastMode[slotIdx] = m;
@@ -707,14 +1102,22 @@ function invoke(){
     player.slots[0] = spellKey;
   }
   player.reinvokeCd = Math.max(0.35, 1.1 - player.invokeLevel * 0.13);
-  log(`Invoked ${SPELLS[spellKey].name} (${comboKey.toUpperCase()}) into slot D.`);
+  log(`Invoked ${SPELLS[spellKey].name} into slot D.`);
 }
 
 function canCast(key){
   const meta = SPELLS[key];
   if((player.cooldowns[key]||0) > 0){ log(`${meta.name} is still on cooldown.`); return false; }
-  if(player.mana < meta.mana){ log(`Not enough mana for ${meta.name}.`); return false; }
   return true;
+}
+
+// A skillshot that lands with zero hits is a whiff, not a resource sink — refund
+// its cooldown immediately so the player can retry the read/aim right away
+// instead of being locked out for the full cooldown on top of the miss.
+function refundMissedCast(key){
+  player.cooldowns[key] = 0;
+  log(`${SPELLS[key].name} missed — cooldown refunded, try again.`);
+  updateHUD();
 }
 
 // Called on key-down (or icon mousedown) for a D/F slot. Cast behavior (normal
@@ -727,6 +1130,12 @@ function startCast(slotIdx){
   if(!canCast(key)) return;
 
   if(meta.cast === 'self'){
+    // No-target spells (icewall/forgespirit) spawn "in front of" Invoker
+    // along his CURRENT facing — real Dota does NOT snap-turn the hero
+    // toward the cursor for these; facing only changes from actually
+    // moving, attacking, or casting a point/unit-target spell. So this
+    // intentionally does NOT touch player.facing — it fires along
+    // whatever facing was last set by one of those real actions.
     executeSpell(key, {});
     return;
   }
@@ -759,6 +1168,7 @@ function resolveTargetAndCast(key, worldPoint){
     for(const en of enemies){ const d = dist(worldPoint, en); if(d < nd){ nd = d; nearest = en; } }
     if(!nearest && dist(worldPoint, player) < 60) nearest = player;
     if(!nearest){ log('No unit near cursor — cast cancelled.'); return; }
+    if(nearest !== player) player.facing = angleTo(player, nearest); // snap to face the target, like Dota
     executeSpell(key, { unit: nearest });
   } else if(meta.cast === 'point'){
     let point = worldPoint;
@@ -769,13 +1179,13 @@ function resolveTargetAndCast(key, worldPoint){
         point = { x: player.x + Math.cos(a)*meta.range, y: player.y + Math.sin(a)*meta.range };
       }
     }
+    player.facing = angleTo(player, point); // snap to face the cast direction, like Dota
     executeSpell(key, { point });
   }
 }
 
 function executeSpell(key, target){
   const meta = SPELLS[key];
-  player.mana -= meta.mana;
   player.cooldowns[key] = meta.cd;
 
   if(target.point){ player.facing = angleTo(player, target.point); }
@@ -797,24 +1207,29 @@ function executeSpell(key, target){
       checkProgress('alacrity'); break;
     }
     case 'icewall': {
-      // Wall is centered exactly on the clicked ground point, perpendicular to the
-      // caster->point line, with a real (converted) length and thickness.
+      // Ground-targeted spells (EMP/Sun Strike) are clicked on the ground; Ice
+      // Wall is NOT — it auto-casts a short distance in front of Invoker along
+      // his current facing, perpendicular to that facing direction.
       const a = player.facing + Math.PI/2;
       const halfLen = meta.length/2;
-      const cx = target.point.x, cy = target.point.y;
+      const cx = player.x + Math.cos(player.facing)*meta.forwardOffset;
+      const cy = player.y + Math.sin(player.facing)*meta.forwardOffset;
       effects.push({
         type:'icewall', cx, cy,
         p1:{ x: cx - Math.cos(a)*halfLen, y: cy - Math.sin(a)*halfLen },
         p2:{ x: cx + Math.cos(a)*halfLen, y: cy + Math.sin(a)*halfLen },
         life: 6, hitSet: new Set(), scored:false, spellKey:key
       });
-      log('Ice Wall raised at the target point, perpendicular to your facing.');
+      log('Ice Wall raised just ahead of you, perpendicular to your facing.');
       break;
     }
     case 'forgespirit': {
-      allies.push({ x: target.point.x, y: target.point.y, radius:9, life: 20, speed: 90 });
-      allies.push({ x: target.point.x+20, y: target.point.y+10, radius:9, life: 20, speed: 90 });
-      log('Forge Spirits summoned.');
+      // No-target: summon just ahead of Invoker along his current facing.
+      const fx = player.x + Math.cos(player.facing)*meta.forwardOffset;
+      const fy = player.y + Math.sin(player.facing)*meta.forwardOffset;
+      allies.push({ x: fx, y: fy, radius:9, life: 20, speed: 90 });
+      allies.push({ x: fx+20, y: fy+10, radius:9, life: 20, speed: 90 });
+      log('Forge Spirits summoned just ahead of you.');
       checkProgress('forgespirit'); break;
     }
     case 'tornado': {
@@ -876,13 +1291,15 @@ const EFFECT_UPDATERS = {
     for(const en of enemies){
       if(!ef.hitSet.has(en) && dist(ef, en) < en.radius + ef.halfWidth){
         ef.hitSet.add(en);
-        const lift = clamp(0.3 + ef.dist/1300, 0.3, 3.6);
+        const lift = clamp(1.7 + ef.dist/1300, 1.7, 3.6);
         en.airborne = { active:true, timer:0, duration: lift };
         log(`Tornado hit! Airborne for ${lift.toFixed(1)}s — line up your follow-up now.`);
         maybeProgressSpell(ef);
       }
     }
-    return ef.dist < ef.maxDist;
+    const keep = ef.dist < ef.maxDist;
+    if(!keep && ef.hitSet.size === 0) refundMissedCast(ef.spellKey);
+    return keep;
   },
   deafeningblast(ef, dt){
     ef.x += ef.dx*ef.speed*dt; ef.y += ef.dy*ef.speed*dt; ef.dist += ef.speed*dt;
@@ -895,7 +1312,9 @@ const EFFECT_UPDATERS = {
         maybeProgressSpell(ef);
       }
     }
-    return ef.dist < ef.maxDist;
+    const keep = ef.dist < ef.maxDist;
+    if(!keep && ef.hitSet.size === 0) refundMissedCast(ef.spellKey);
+    return keep;
   },
   chaosmeteor(ef, dt){
     if(ef.state === 'falling'){
@@ -911,7 +1330,9 @@ const EFFECT_UPDATERS = {
         maybeProgressSpell(ef);
       }
     }
-    return ef.rollDist < ef.maxRollDist;
+    const keep = ef.rollDist < ef.maxRollDist;
+    if(!keep && ef.hitSet.size === 0) refundMissedCast(ef.spellKey);
+    return keep;
   },
   emp(ef, dt){
     ef.timer += dt;
@@ -928,6 +1349,7 @@ const EFFECT_UPDATERS = {
         log(`EMP pulsed and hit ${hitCount} hero${hitCount>1?'es':''}, but you needed ${need}.`);
       } else {
         log('EMP pulsed but found no target in range.');
+        refundMissedCast(ef.spellKey);
       }
       ef.flash = 0.5;
     }
@@ -949,6 +1371,7 @@ const EFFECT_UPDATERS = {
         log(`Sun Strike hit ${hitCount} hero${hitCount>1?'es':''}, but you needed ${need}.`);
       } else {
         log('Sun Strike lands — but misses the target.');
+        refundMissedCast(ef.spellKey);
       }
       ef.flash = 0.4;
     }
@@ -965,7 +1388,12 @@ const EFFECT_UPDATERS = {
         hitThisFrame = true;
         if(!ef.hitSet.has(en)){
           ef.hitSet.add(en);
-          if(mode === 'combo'){ log('Ice Wall blocks the target\'s path!'); maybeProgressSpell(ef); }
+          // Progress the objective chain in any of the active scenario-driven
+          // modes (combo / tap / endless) — gated on scenario.active rather
+          // than a hardcoded 'combo' mode check so the newer endless modes
+          // work too. Never fires in the dedicated Ice Wall Precision drill,
+          // which sets scenario.active = false on entry.
+          if(scenario && scenario.active){ log('Ice Wall blocks the target\'s path!'); maybeProgressSpell(ef); }
         }
       }
     }
@@ -991,28 +1419,69 @@ function updateEffects(dt){
 function updatePlayer(dt){
   for(const k in player.cooldowns){ if(player.cooldowns[k] > 0) player.cooldowns[k] = Math.max(0, player.cooldowns[k]-dt); }
   player.reinvokeCd = Math.max(0, player.reinvokeCd - dt);
-  player.mana = Math.min(player.manaMax, player.mana + player.manaRegen*dt);
 
   if(player.buffs.ghostwalk){
     player.buffs.ghostwalk -= dt;
     if(player.buffs.ghostwalk <= 0){ player.buffs.ghostwalk = 0; player.invisible = false; }
   }
 
-  // facing follows mouse cursor at all times (for aiming ice wall / skillshots)
-  player.facing = angleTo(player, mouseWorld);
+  // Facing is set by actions (move/cast/attack), Dota-style — it does NOT
+  // continuously track the mouse cursor. See the move/attack blocks below,
+  // and resolveTargetAndCast()/executeSpell() for cast-driven facing.
 
-  if(player.moveTarget){
+  if(player.attackCd > 0) player.attackCd = Math.max(0, player.attackCd - dt);
+  if(player.alacritied > 0) player.alacritied = Math.max(0, player.alacritied - dt);
+
+  // Attack-move: walk into range of the clicked enemy, then auto-attack it
+  // on cooldown for as long as it stays targeted (real left-click-to-attack).
+  if(player.attackTarget && !enemies.includes(player.attackTarget)) player.attackTarget = null;
+  if(player.attackTarget){
+    const t = player.attackTarget;
+    const d = dist(player, t);
+    player.facing = angleTo(player, t); // always face the attack target, moving or not
+    if(d > player.attackRange){
+      const speed = player.speed + player.orbLevels.w*4 + (player.buffs.ghostwalk ? 40 : 0);
+      const a = angleTo(player, t);
+      player.x += Math.cos(a) * speed * dt;
+      player.y += Math.sin(a) * speed * dt;
+    } else if(player.attackCd <= 0){
+      performAttack(t);
+    }
+  } else if(player.moveTarget){
     const d = dist(player, player.moveTarget);
     const speed = player.speed + player.orbLevels.w*4 + (player.buffs.ghostwalk ? 40 : 0);
     if(d < 4){ player.moveTarget = null; }
     else {
       const a = angleTo(player, player.moveTarget);
+      player.facing = a; // face the direction of travel while moving
       player.x += Math.cos(a) * speed * dt;
       player.y += Math.sin(a) * speed * dt;
     }
   }
   player.x = clamp(player.x, player.radius, WORLD.w - player.radius);
   player.y = clamp(player.y, player.radius, WORLD.h - player.radius);
+}
+
+// Base ~1s swing timer, a little faster with more Wex levels, roughly doubled
+// by an active Alacrity buff (cast on self within 60 range of the Q/W/E
+// unit-target resolver).
+function attackIntervalFor(){
+  let t = 1.0 - player.orbLevels.w * 0.03;
+  if(player.alacritied > 0) t *= 0.55;
+  return clamp(t, 0.3, 1.2);
+}
+
+function performAttack(target){
+  player.attackCd = attackIntervalFor();
+  const dmg = 45;
+  target.hp = Math.max(0, target.hp - dmg);
+  attackFx.push({ x: target.x, y: target.y, life: 0.25 });
+  if(target.chilled > 0){
+    log('❄️ Cold Snap explosion! Invoker attacks!');
+  } else {
+    log('Invoker attacks!');
+  }
+  checkProgress('attack');
 }
 
 function updateEnemy(en, dt){
@@ -1045,8 +1514,8 @@ function updateEnemy(en, dt){
       en.y += Math.sin(a) * speed * dt;
     }
   }
-  en.x = clamp(en.x, en.radius, WORLD.w - en.radius);
-  en.y = clamp(en.y, en.radius, WORLD.h - en.radius);
+  en.x = clamp(en.x, UNIT_MARGIN, WORLD.w - UNIT_MARGIN);
+  en.y = clamp(en.y, UNIT_MARGIN, WORLD.h - UNIT_MARGIN);
 }
 
 function updateAllies(dt){
@@ -1082,6 +1551,7 @@ function update(dt){
   updateAllies(dt);
   updateEffects(dt);
   for(let i = moveClicks.length-1; i>=0; i--){ moveClicks[i].life -= dt; if(moveClicks[i].life<=0) moveClicks.splice(i,1); }
+  for(let i = attackFx.length-1; i>=0; i--){ attackFx[i].life -= dt; if(attackFx[i].life<=0) attackFx.splice(i,1); }
   updateCamera();
   updatePositionGoal();
 
@@ -1101,15 +1571,6 @@ function updateHUD(){
   document.getElementById('lvlE').textContent = player.orbLevels.e;
   document.getElementById('lvlR').textContent = player.invokeLevel;
 
-  const buf = document.getElementById('orbBuffer');
-  buf.innerHTML = '';
-  for(let i=0;i<3;i++){
-    const letter = player.orbQueue[player.orbQueue.length-3+i];
-    const div = document.createElement('div');
-    div.className = 'buf-slot' + (letter ? ' '+letter : '');
-    buf.appendChild(div);
-  }
-
   [0,1].forEach(idx=>{
     const el = document.getElementById(idx===0?'slotD':'slotF');
     const key = player.slots[idx];
@@ -1119,17 +1580,15 @@ function updateHUD(){
     const pct = cd>0 ? (cd/meta.cd*100) : 0;
     el.className = 'spell-slot';
     el.innerHTML = `<span class="key">${idx===0?'D':'F'}</span>${meta.icon}<div class="cdfill" style="height:${pct}%"></div>${cd>0?`<span class="cdtext">${cd.toFixed(1)}</span>`:''}`;
-    el.title = `${meta.name} (${meta.combo})`;
+    el.title = meta.name;
   });
 
-  document.getElementById('hpFill').style.width = (player.hp/player.hpMax*100)+'%';
-  document.getElementById('hpText').textContent = `${Math.round(player.hp)}/${player.hpMax}`;
-  document.getElementById('manaFill').style.width = (player.mana/player.manaMax*100)+'%';
-  document.getElementById('manaText').textContent = `${Math.round(player.mana)}/${Math.round(player.manaMax)}`;
   document.getElementById('speedText').textContent = `Move Speed: ${Math.round(player.speed + player.orbLevels.w*4)}`;
 
   if(scenario){
-    document.getElementById('timerText').textContent = scenario.active ? Math.ceil(scenario.timeLeft)+'s' : '--';
+    document.getElementById('timerText').textContent = scenario.active
+      ? (isFinite(scenario.timeLeft) ? Math.ceil(scenario.timeLeft)+'s' : '∞')
+      : '--';
   }
 }
 
@@ -1164,6 +1623,16 @@ function drawMoveClicks(){
   }
 }
 
+function drawAttackFx(){
+  for(const fx of attackFx){
+    const s = worldToScreen(fx.x, fx.y);
+    const alpha = clamp(fx.life/0.25, 0, 1);
+    ctx.strokeStyle = `rgba(255,220,120,${alpha})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(s.x, s.y, 18*(1-alpha)+10, 0, Math.PI*2); ctx.stroke();
+  }
+}
+
 function drawPositionGoal(){
   if(!scenario || !scenario.active || !scenario.positionGoal || scenario.positionGoal.satisfied) return;
   const g = scenario.positionGoal;
@@ -1189,8 +1658,14 @@ function drawEffects(){
     } else if(ef.type === 'tornado' || ef.type === 'deafeningblast'){
       const s = worldToScreen(ef.x, ef.y);
       const meta = SPELLS[ef.spellKey];
+      // ef.halfWidth is a hit-tolerance corridor, not a visual size — draw it as a faint outline
+      // and render the actual projectile as a small solid dot, so it reads as a fast-moving
+      // skillshot instead of a giant opaque ball sitting on top of the player.
+      ctx.strokeStyle = meta.color; ctx.globalAlpha = 0.25; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 1;
       ctx.fillStyle = meta.color;
-      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI*2); ctx.fill();
       ctx.font = '16px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(meta.icon, s.x, s.y);
     } else if(ef.type === 'chaosmeteor'){
@@ -1202,12 +1677,14 @@ function drawEffects(){
         ctx.setLineDash([6,4]); ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius, 0, Math.PI*2); ctx.stroke();
         ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(224,85,58,0.22)';
+        ctx.fillStyle = 'rgba(224,85,58,0.15)';
         ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius*prog, 0, Math.PI*2); ctx.fill();
         ctx.font = '22px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(meta.icon, s.x, s.y - ef.radius - 16);
       } else {
-        ctx.fillStyle = 'rgba(224,85,58,0.32)';
+        // Show the true impact radius as a thin ring with a faint fill, rather
+        // than a big solid disc, so it reads as a rolling meteor, not a giant ball.
+        ctx.fillStyle = 'rgba(224,85,58,0.16)';
         ctx.beginPath(); ctx.arc(s.x, s.y, ef.radius, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle = 'rgba(255,150,110,0.8)'; ctx.lineWidth = 2; ctx.stroke();
         ctx.font = '20px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1299,6 +1776,31 @@ function drawUnit(u, opts){
   ctx.restore();
 }
 
+// The queued-orb indicator (what R/Invoke will combine into a spell) orbits
+// the player's own hero model on the canvas — like the small glowing orbs
+// that circle Invoker in the real game — instead of sitting in a separate
+// HUD panel next to the Q/W/E buttons.
+const ORB_COLORS = { q:'#3aa0e0', w:'#8e5fe0', e:'#e8c94a' };
+function drawOrbRing(u, queue){
+  const ringR = u.radius + 16;
+  const spin = performance.now()/900;
+  for(let i=0;i<3;i++){
+    const letter = queue[queue.length-3+i];
+    const angle = spin + i*(Math.PI*2/3);
+    // Flattened into an ellipse (not a full circle) so it reads as orbiting
+    // around the hero from this top-down camera angle rather than floating
+    // above/below them.
+    const ox = u.x + Math.cos(angle)*ringR;
+    const oy = u.y + Math.sin(angle)*ringR*0.5;
+    const s = worldToScreen(ox, oy);
+    ctx.beginPath();
+    ctx.fillStyle = letter ? ORB_COLORS[letter] : 'rgba(255,255,255,0.15)';
+    ctx.arc(s.x, s.y, letter ? 5 : 3.5, 0, Math.PI*2);
+    ctx.fill();
+    if(letter){ ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
+  }
+}
+
 function drawTargeting(){
   if(!targetingSpell) return;
   const meta = SPELLS[targetingSpell];
@@ -1320,16 +1822,6 @@ function drawTargeting(){
     ctx.setLineDash([]);
     ctx.strokeStyle = '#f2c94c';
     ctx.beginPath(); ctx.arc(s.x, s.y, 26, 0, Math.PI*2); ctx.stroke();
-  } else if(targetingSpell === 'icewall'){
-    const a = player.facing + Math.PI/2;
-    const halfLen = meta.length/2;
-    const p1 = worldToScreen(point.x - Math.cos(a)*halfLen, point.y - Math.sin(a)*halfLen);
-    const p2 = worldToScreen(point.x + Math.cos(a)*halfLen, point.y + Math.sin(a)*halfLen);
-    ctx.setLineDash([]);
-    ctx.strokeStyle = 'rgba(150,230,255,0.85)'; ctx.lineWidth = meta.thickness;
-    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
-    ctx.setLineDash([5,5]); ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
   } else if(meta.radius){
     ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
     ctx.setLineDash([]);
@@ -1338,8 +1830,13 @@ function drawTargeting(){
   } else {
     ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
     ctx.setLineDash([]);
+    // Preview the hit-tolerance corridor as a faint ring (not a solid filled blob) plus a small
+    // dot marking the exact aim point, matching the in-flight projectile's rendering.
+    ctx.strokeStyle = meta.color; ctx.globalAlpha = 0.25; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, meta.halfWidth || 8, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.fillStyle = meta.color;
-    ctx.beginPath(); ctx.arc(s.x, s.y, meta.halfWidth || 8, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(s.x, s.y, 6, 0, Math.PI*2); ctx.fill();
   }
   ctx.setLineDash([]);
 }
@@ -1348,6 +1845,7 @@ function render(){
   drawGrid();
   drawPositionGoal();
   drawMoveClicks();
+  drawAttackFx();
   drawEffects();
   drawAllies();
 
@@ -1355,7 +1853,8 @@ function render(){
     drawUnit(en, { color:'#c0392b', hpMax:en.hpMax, label:'Enemy Hero' });
   }
   drawUnit(player, { color: player.invisible ? 'rgba(90,140,220,0.4)':'#2f6fd6', alpha: player.invisible?0.55:1,
-    facing: player.facing, hpMax: player.hpMax, hpColor:'#3fae55', label:'Invoker' });
+    facing: player.facing, label:'Invoker' });
+  drawOrbRing(player, player.orbQueue);
 
   drawTargeting();
 }
