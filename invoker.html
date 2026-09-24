@@ -6,7 +6,9 @@
 <title>Invoker Combo Trainer</title>
 <style>
   :root{
-    --quas:#3aa0e0; --wex:#8e5fe0; --exort:#e8c94a;
+    --quas:#28CFFF; --quas-bright:#B9F6FF; --quas-dark:#0877B9;
+    --wex:#D83CFF; --wex-bright:#FFB5FF; --wex-dark:#74139B;
+    --exort:#FFAA20; --exort-bright:#FFF09A; --exort-dark:#D7420A;
     --bg:#0e1116; --panel:#171c24; --panel-border:#333c4a; --gold:#d8b466;
   }
   *{box-sizing:border-box;}
@@ -22,6 +24,12 @@
   #objective-stats{display:flex;gap:14px;align-items:center;font-size:13px;white-space:nowrap;}
   #objective-stats b{color:var(--gold);}
   #controls{display:flex;gap:6px;flex-wrap:wrap;}
+  #ttControls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  #ttComboSelect{background:#232b38;color:#dfe4ea;border:1px solid #3a4556;border-radius:5px;padding:5px 8px;font-size:12px;cursor:pointer;}
+  #ttStatsGraph{display:flex;align-items:center;gap:16px;background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:8px 12px;flex-wrap:wrap;}
+  #ttStatsGraph .tt-stat{font-size:11px;color:#8b95a5;text-transform:uppercase;letter-spacing:.5px;}
+  #ttStatsGraph .tt-stat b{display:block;color:#dfe4ea;font-size:15px;text-transform:none;letter-spacing:0;margin-top:1px;}
+  #ttGraph{background:#141922;border-radius:4px;flex:1;min-width:160px;max-width:320px;height:44px;}
   button.ctrl{background:#232b38;color:#dfe4ea;border:1px solid #3a4556;border-radius:5px;padding:6px 10px;font-size:12px;cursor:pointer;}
   button.ctrl:hover{background:#2c3648;}
   #chips{display:flex;gap:6px;flex-wrap:wrap;}
@@ -36,14 +44,20 @@
   /* Two rows that mimic a physical keyboard's QWERTY stagger: top row is
      Q/W/E/R, bottom row is A/S/D/F, each row's 4 buttons share the row
      width equally (flex:1, capped by max-width) so nothing can ever
-     overflow a narrow screen, and the bottom row is nudged right with a
-     PERCENTAGE padding (never a fixed px) for the same overflow-safety. */
+     overflow a narrow screen, and the bottom row is nudged right by HALF a
+     button+gap width (via calc() off the same --btn-size var the buttons
+     themselves are capped at, never a fixed px disconnected from the actual
+     button size) — a real keyboard's A sits about half a key to the right
+     of Q, not a whole key over. Both rows are left-aligned (not centered)
+     so the on-screen "keyboard" reads as a single left-anchored block. */
   #hud-bottom{display:flex;flex-direction:column;gap:6px;}
-  .hud-row{display:flex;align-items:flex-start;justify-content:center;gap:6px;}
-  .hud-row-bottom{padding-left:14%;}
-  .hud-row > *{flex:1 1 0;max-width:64px;min-width:0;aspect-ratio:1;box-sizing:border-box;}
+  .hud-row{--btn-size:64px;display:flex;align-items:flex-start;justify-content:flex-start;gap:6px;}
+  .hud-row-bottom{padding-left:calc((var(--btn-size) + 6px) * 0.2);}
+  .hud-row > *{flex:1 1 0;max-width:var(--btn-size);min-width:0;aspect-ratio:1;box-sizing:border-box;}
   .orb-btn{position:relative;border-radius:6px;border:2px solid #333c4a;font-weight:700;font-size:16px;cursor:pointer;color:#0a0d12;}
-  .orb-btn.quas{background:var(--quas);} .orb-btn.wex{background:var(--wex);color:#fff;} .orb-btn.exort{background:var(--exort);}
+  .orb-btn.quas{background:radial-gradient(circle at 35% 30%, var(--quas-bright), var(--quas) 55%, var(--quas-dark) 100%); box-shadow:0 0 10px 1px rgba(40,207,255,0.6);}
+  .orb-btn.wex{background:radial-gradient(circle at 35% 30%, var(--wex-bright), var(--wex) 55%, var(--wex-dark) 100%); color:#fff; box-shadow:0 0 10px 1px rgba(216,60,255,0.6);}
+  .orb-btn.exort{background:radial-gradient(circle at 35% 30%, var(--exort-bright), var(--exort) 55%, var(--exort-dark) 100%); box-shadow:0 0 10px 1px rgba(255,170,32,0.6);}
   .orb-btn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
   #invokeBtn{border-radius:6px;background:#4b3f7a;border:2px solid #6a58ad;color:#f0e9ff;font-weight:700;font-size:13px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;}
   #invokeBtn .lvl{position:absolute;bottom:-6px;right:-6px;background:#111;color:#fff;border-radius:50%;font-size:10px;padding:1px 4px;border:1px solid #555;}
@@ -69,10 +83,94 @@
   #modeTabs{display:flex;gap:4px;margin-bottom:2px;}
   .tab-btn{background:#1c222c;color:#9aa5b5;border:1px solid #3a4556;border-bottom:none;border-radius:6px 6px 0 0;padding:6px 12px;font-size:12.5px;cursor:pointer;}
   .tab-btn.active{background:var(--panel);color:var(--gold);border-color:var(--gold);}
+  #enemySpeedBar{display:flex;align-items:center;gap:6px;font-size:12px;color:#9aa5b5;margin:2px 0;}
+  #enemySpeedBar select{background:#232b38;color:#dfe4ea;border:1px solid #3a4556;border-radius:5px;padding:3px 6px;font-size:12px;cursor:pointer;}
   #icewallPanel{display:flex;flex-direction:column;gap:8px;}
   #iw-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
   #iw-stats{display:flex;gap:16px;align-items:center;font-size:13px;white-space:nowrap;}
   #iw-stats b{color:var(--gold);}
+
+  /* --- Tactical Training: teamfight decision puzzles -------------------- */
+  #tacticalPanel{display:flex;flex-direction:column;gap:8px;}
+  #tac-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  #tac-stats{display:flex;gap:14px;align-items:center;font-size:13px;white-space:nowrap;}
+  #tac-stats b{color:var(--gold);}
+  #tacInvokerStatus{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:12px;color:#aab3c0;background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:6px 10px;}
+  .tac-bar-wrap{display:flex;align-items:center;gap:5px;}
+  .tac-bar{position:relative;width:80px;height:9px;background:#0b0e13;border:1px solid #333c4a;border-radius:4px;overflow:hidden;}
+  .tac-bar-fill{position:absolute;left:0;top:0;bottom:0;}
+  .tac-spellbook{display:flex;flex-wrap:wrap;gap:5px;}
+  .tac-spell-chip{display:flex;align-items:center;gap:4px;background:#0b0e13;border:1px solid #333c4a;border-radius:5px;padding:3px 7px;font-size:11px;color:#9fb0c3;}
+  .tac-spell-chip.ready{color:#8ee3a6;border-color:#2f5c40;}
+  #tacOptions{display:flex;flex-direction:column;gap:6px;}
+  .tac-option{position:relative;text-align:left;background:#1c222c;color:#dfe4ea;border:1px solid #3a4556;border-radius:6px;padding:9px 12px;font-size:13px;cursor:pointer;line-height:1.35;}
+  .tac-option:hover:not(:disabled){background:#2c3648;border-color:var(--gold);}
+  .tac-option:disabled{cursor:default;opacity:.6;}
+  .tac-option.chosen{opacity:1;border-color:var(--gold);box-shadow:0 0 6px rgba(216,180,102,.4);background:#242c22;}
+  .tac-option .qtag{float:right;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px;margin-left:8px;}
+  .qtag.excellent{background:#1f7a43;color:#c9f7d8;}
+  .qtag.good{background:#1f5f7a;color:#cdeaf7;}
+  .qtag.acceptable{background:#5a5f2e;color:#eef2c9;}
+  .qtag.questionable{background:#7a5a1f;color:#f7e3cd;}
+  .qtag.bad{background:#7a1f1f;color:#f7cdcd;}
+  #tacFeedback{display:none;background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:10px 12px;}
+  #tacFeedback .qtitle{font-weight:700;font-size:13.5px;margin-bottom:4px;}
+  #tacFeedback .qtitle.excellent{color:#4caf6b;}
+  #tacFeedback .qtitle.good{color:#5db8e8;}
+  #tacFeedback .qtitle.acceptable{color:#d8cf6b;}
+  #tacFeedback .qtitle.questionable{color:#e0a03a;}
+  #tacFeedback .qtitle.bad{color:#e0553a;}
+  #tacFeedback .qtext{font-size:12.5px;color:#c3ccd8;}
+  #tacFeedback .qnext{margin-top:8px;}
+  #tacCategoryStats{display:flex;flex-wrap:wrap;gap:6px;font-size:10.5px;color:#9aa5b5;}
+  .tac-cat-chip{background:#1c222c;border:1px solid #333c4a;border-radius:5px;padding:3px 7px;}
+  .tac-cat-chip b{color:var(--gold);}
+
+  /* --- Orb Shift + Invoke Chain: orb-efficiency mini-games ------------- */
+  #orbShiftPanel, #chainPanel{display:flex;flex-direction:column;gap:10px;}
+  #os-top, #ic-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  #os-stats, #ic-stats{display:flex;gap:14px;align-items:center;font-size:13px;white-space:nowrap;}
+  #os-stats b, #ic-stats b{color:var(--gold);}
+  #osControls, #icControls{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .os-auto-label{display:flex;align-items:center;gap:5px;font-size:12px;color:#9aa5b5;cursor:pointer;user-select:none;}
+  .os-auto-label input{cursor:pointer;}
+  .os-auto-countdown{font-size:11.5px;color:#8b95a5;margin-left:8px;}
+  .diff-btn{opacity:.6;}
+  .diff-btn.active{opacity:1;border-color:var(--gold);color:var(--gold);}
+  .os-label{font-size:11px;color:#8b95a5;letter-spacing:.5px;text-transform:uppercase;margin-bottom:3px;}
+  .os-chips{display:flex;gap:8px;flex-wrap:wrap;min-height:38px;align-items:center;}
+  /* Styled to match the real in-game orb HUD icons (circular, textured
+     radial-gradient fill, green "queued/ready" ring) instead of flat
+     letter chips — trains visual orb recognition that transfers directly
+     to actual Dota play, where orbs are never labeled with their letter. */
+  .orb-chip{display:flex;align-items:center;justify-content:center;width:34px;height:34px;box-sizing:border-box;border-radius:50%;font-weight:700;font-size:12px;color:#0a0d12;}
+  .orb-chip.q, .orb-chip.w, .orb-chip.e{border:2px solid #4a7a3f;}
+  .orb-chip.q{background:radial-gradient(circle at 35% 30%, var(--quas-bright), var(--quas) 55%, var(--quas-dark) 100%);box-shadow:0 0 4px rgba(40,207,255,0.35), inset 0 0 5px rgba(0,0,0,0.45);}
+  .orb-chip.w{background:radial-gradient(circle at 35% 30%, var(--wex-bright), var(--wex) 55%, var(--wex-dark) 100%);box-shadow:0 0 4px rgba(216,60,255,0.35), inset 0 0 5px rgba(0,0,0,0.45);}
+  .orb-chip.e{background:radial-gradient(circle at 35% 30%, var(--exort-bright), var(--exort) 55%, var(--exort-dark) 100%);box-shadow:0 0 4px rgba(255,170,32,0.35), inset 0 0 5px rgba(0,0,0,0.45);}
+  .orb-chip.r{background:radial-gradient(circle at 35% 30%, #cabaff, #6a58ad 55%, #362a5e 100%);border:3px solid var(--gold);color:#f0e9ff;box-shadow:0 0 7px rgba(106,88,173,0.6), inset 0 0 5px rgba(0,0,0,0.45);}
+  .os-target-spell{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--gold);background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:8px 12px;}
+  #osFeedback, #icFeedback{background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:10px 12px;display:none;}
+  #osFeedback .qtitle, #icFeedback .qtitle{font-weight:700;font-size:13.5px;margin-bottom:4px;}
+  #osFeedback .qtitle.perfect, #icFeedback .qtitle.perfect{color:#4caf6b;}
+  #osFeedback .qtitle.good, #icFeedback .qtitle.good{color:#5db8e8;}
+  #osFeedback .qtitle.ok, #icFeedback .qtitle.ok{color:#d8cf6b;}
+  #osFeedback .qtitle.bad, #icFeedback .qtitle.bad{color:#e0553a;}
+  #osFeedback .qrow, #icFeedback .qrow{font-size:12.5px;color:#c3ccd8;margin:2px 0;}
+  #osFeedback .qrow b, #icFeedback .qrow b{color:#dfe4ea;}
+  #osFeedback .qnext, #icFeedback .qnext{margin-top:8px;}
+  #icChainSteps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .ic-step{display:flex;align-items:center;gap:6px;background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:6px 10px;font-size:12.5px;color:#9aa5b5;}
+  .ic-step .icon{font-size:16px;}
+  .ic-step.current{border-color:var(--gold);color:var(--gold);box-shadow:0 0 6px rgba(216,180,102,.4);}
+  .ic-step.done{opacity:.6;border-color:#2f5c40;color:#8ee3a6;}
+  .ic-arrow{color:#5b6472;font-size:14px;}
+  .ic-step-breakdown{display:flex;flex-direction:column;gap:3px;margin-top:6px;}
+  .ic-step-row{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#9aa5b5;background:#0b0e13;border:1px solid #262d38;border-radius:4px;padding:3px 8px;}
+  .ic-step-row.inefficient{color:#e0a03a;}
+  .ic-step-detail{font-size:11px;color:#8b95a5;background:#0b0e13;border:1px solid #262d38;border-top:none;border-radius:0 0 4px 4px;padding:4px 8px 6px;margin-top:-1px;}
+  .ic-step-detail b{color:#c3ccd8;}
+
   #log{height:96px;overflow-y:auto;background:#0b0e13;border:1px solid #333c4a;border-radius:6px;padding:5px 8px;font-family:Consolas,Monaco,monospace;font-size:11.5px;color:#9fb0c3;}
   #log div{padding:1px 0;}
   footer{font-size:11px;color:#5b6472;text-align:center;padding:4px 0 10px;}
@@ -97,7 +195,8 @@
     #endlessControls{display:none;}
     #log{display:none;}
     footer{display:none;}
-    .hud-row > *{max-width:76px;}
+    #enemySpeedBar{display:none;}
+    .hud-row{--btn-size:76px;}
     .orb-btn, .action-btn{font-size:18px;}
     #invokeBtn{font-size:14px;}
     .spell-slot{font-size:24px;}
@@ -181,7 +280,23 @@
     <button class="tab-btn" id="tabIceWall">🧊 Ice Wall Precision</button>
     <button class="tab-btn" id="tabTap">🎯 Skill Tap</button>
     <button class="tab-btn" id="tabEndless">🔁 Endless Rotation</button>
-    <button class="tab-btn" id="tabGuide">📖 Combo Guide</button>
+    <button class="tab-btn" id="tabTimeTrial">⏱️ Time Trial</button>
+    <button class="tab-btn" id="tabOrbShift">🌀 Orb Shift</button>
+    <button class="tab-btn" id="tabChain">🔗 Invoke Chain</button>
+    <button class="tab-btn" id="tabTactical">🧠 Tactical Training</button>
+    <button class="tab-btn" id="tabHelp">📖 Help</button>
+  </div>
+
+  <div id="enemySpeedBar">
+    <span>Enemy Move Speed:</span>
+    <select id="enemySpeedSelect">
+      <option value="250">250 · Slow</option>
+      <option value="280">280 · Invoker Base</option>
+      <option value="300" selected>300 · Normal</option>
+      <option value="350">350 · Fast</option>
+      <option value="400">400 · Very Fast</option>
+      <option value="450">450 · Extremely Fast</option>
+    </select>
   </div>
 
   <div class="panel" id="objective-panel">
@@ -204,15 +319,24 @@
         <div id="endlessControls" style="display:none">
           <button class="ctrl" id="resetStreakBtn">🔄 Reset Streak</button>
         </div>
+        <div id="ttControls" style="display:none">
+          <select id="ttComboSelect"></select>
+          <button class="ctrl" id="ttStartBtn">▶️ Start Time Trial</button>
+        </div>
       </div>
       <div id="chips"></div>
       <div id="positionStatus" style="display:none;font-size:12px;margin-top:2px;"></div>
+      <div id="ttStatsGraph" style="display:none">
+        <div class="tt-stat">Last<b id="ttLast">—</b></div>
+        <div class="tt-stat">Avg (last 5)<b id="ttAvg">—</b></div>
+        <svg id="ttGraph" viewBox="0 0 300 44" preserveAspectRatio="none"></svg>
+      </div>
     </div>
     <div id="icewallPanel" style="display:none">
       <div id="iw-top">
         <div id="objective-text">
           <div class="title">Ice Wall Precision Drill</div>
-          <div class="desc">Face the enemy and cast Ice Wall so it lands directly on top of them. A new random position is generated after every attempt.</div>
+          <div class="desc">Face both enemies and cast Ice Wall so it lands on top of both of them at once. A new random position is generated after every attempt.</div>
         </div>
         <div id="iw-stats">
           <div>Attempts: <b id="iwAttempts">0</b></div>
@@ -225,9 +349,92 @@
         </div>
       </div>
     </div>
+    <div id="tacticalPanel" style="display:none">
+      <div id="tac-top">
+        <div id="objective-text">
+          <div class="title" id="tacTitle">—</div>
+          <div class="desc" id="tacIntro">Press "New Puzzle" to begin.</div>
+        </div>
+        <div id="tac-stats">
+          <div>Puzzle: <b id="tacPuzzleNum">–</b></div>
+          <div>Score: <b id="tacScore">0</b></div>
+          <div>Streak: <b id="tacStreak">0</b></div>
+        </div>
+        <div id="tacControls">
+          <button class="ctrl" id="tacNewBtn">🎲 New Puzzle</button>
+        </div>
+      </div>
+      <div id="tacInvokerStatus"></div>
+      <div id="tacOptions"></div>
+      <div id="tacFeedback"></div>
+      <div id="tacCategoryStats"></div>
+    </div>
+    <div id="orbShiftPanel" style="display:none">
+      <div id="os-top">
+        <div id="objective-text">
+          <div class="title">Orb Shift</div>
+          <div class="desc">Reach the target spell using the fewest possible orb changes from your current three orbs — the orb queue rolls, it never resets between targets.</div>
+        </div>
+        <div id="os-stats">
+          <div>Attempts: <b id="osAttempts">0</b></div>
+          <div>Perfect: <b id="osScore">0</b></div>
+          <div>Streak: <b id="osStreak">0</b></div>
+          <div>Best: <b id="osBestStreak">0</b></div>
+        </div>
+        <div id="osControls">
+          <label class="os-auto-label"><input type="checkbox" id="osAutoAdvance"> Auto-advance</label>
+          <button class="ctrl" id="osNewBtn">🎲 New Target</button>
+        </div>
+      </div>
+      <div>
+        <div class="os-label">Current Orbs</div>
+        <div id="osOrbChips" class="os-chips"></div>
+      </div>
+      <div>
+        <div class="os-label">Target Spell</div>
+        <div id="osTargetSpell" class="os-target-spell">—</div>
+      </div>
+      <div>
+        <div class="os-label">Your Input This Attempt</div>
+        <div id="osPressChips" class="os-chips"></div>
+      </div>
+      <div id="osFeedback"></div>
+    </div>
+    <div id="chainPanel" style="display:none">
+      <div id="ic-top">
+        <div id="objective-text">
+          <div class="title">Invoke Chain</div>
+          <div class="desc" id="icDesc">Invoke each spell below in order, keeping your orb transitions efficient. The orb queue rolls, it never resets mid-chain.</div>
+        </div>
+        <div id="ic-stats">
+          <div>Chains: <b id="icAttempts">0</b></div>
+          <div>Clean: <b id="icScore">0</b></div>
+          <div>Streak: <b id="icStreak">0</b></div>
+        </div>
+        <div id="icControls">
+          <button class="ctrl diff-btn active" id="icDiffBeginner">Beginner</button>
+          <button class="ctrl diff-btn" id="icDiffIntermediate">Intermediate</button>
+          <button class="ctrl diff-btn" id="icDiffAdvanced">Advanced</button>
+          <label class="os-auto-label"><input type="checkbox" id="icAutoAdvance"> Auto-advance</label>
+          <button class="ctrl" id="icNewBtn">🎲 New Chain</button>
+        </div>
+      </div>
+      <div id="icChainSteps"></div>
+      <div>
+        <div class="os-label">Current Orbs</div>
+        <div id="icOrbChips" class="os-chips"></div>
+      </div>
+      <div id="icFeedback"></div>
+    </div>
   </div>
 
-  <div class="panel" id="guidePanel" style="display:none">
+  <div class="panel" id="helpPanel" style="display:none">
+    <div class="title" style="color:var(--gold);font-weight:600;font-size:15px;">Invoker Spellbook</div>
+    <div class="desc" style="font-size:12.5px;color:#aab3c0;margin:4px 0 8px;">
+      Every invoked spell and the orb combo that produces it. Invoke (R) after queuing the three orbs to cast from slot D.
+    </div>
+    <div id="spellbookList" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;padding-right:4px;margin-bottom:14px;"></div>
+
     <div class="title" style="color:var(--gold);font-weight:600;font-size:15px;">Invoker Combo Guide</div>
     <div class="desc" style="font-size:12.5px;color:#aab3c0;margin:4px 0 8px;">
       Reference list of common Invoker combos. Abbreviations:
@@ -235,11 +442,11 @@
       <b>ALAC</b>=Alacrity, <b>FS</b>=Forge Spirit, <b>MET</b>=Chaos Meteor, <b>SS</b>=Sun Strike, <b>DB</b>=Deafening Blast, <b>AA</b>=normal attack.
       Sequences show a common execution order, not a mandatory fixed button-press script — always cast based on what's actually up and in range.
     </div>
-    <div id="guideList" style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding-right:4px;"></div>
+    <div id="guideList" style="display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;padding-right:4px;"></div>
   </div>
 
   <div id="canvas-wrap">
-    <canvas id="game" width="960" height="540"></canvas>
+    <canvas id="game" width="1600" height="900"></canvas>
     <div id="overlay-msg"></div>
     <div id="hint-bar">Right-click: move · Q/W/E: queue orb · R: invoke · A: attack · S: stop · D/F: cast slot · Esc: cancel targeting</div>
   </div>
@@ -287,7 +494,7 @@
 /* ---------------------------------------------------------------------
    Constants / world setup
 --------------------------------------------------------------------- */
-const VIEW = { w: 960, h: 540 };
+const VIEW = { w: 1600, h: 900 };
 // World is restricted to exactly the visible window — the camera never scrolls,
 // mirroring a fixed Dota-style viewport rather than a free-roam map.
 const WORLD = { w: VIEW.w, h: VIEW.h };
@@ -331,8 +538,17 @@ function flashOverlay(text, color){
    Spell / combo definitions
 --------------------------------------------------------------------- */
 // Pixels-per-Dota-unit conversion so spell radii/ranges/speeds are scaled
-// proportionally to their real in-game values within our fixed 960x540 window.
-const PPU = 0.5;
+// proportionally to their real in-game values within our fixed 1600x900 window.
+// Every distance/size/speed in SPELLS and on the player/enemies goes through
+// U() so the WHOLE canvas is one consistent scale model — nothing is
+// separately shrunk or exaggerated to "look better"; a spell that's twice as
+// wide in real Dota units is drawn exactly twice as wide here.
+// PPU is DERIVED from a target world extent rather than hand-picked: our
+// fixed 1600x900 (16:9) viewport is calibrated to represent approximately
+// 2700 x 1520 real Dota world units, like a Dota-style fixed camera — so
+// WORLD_UNITS.w/h are the "source of truth" and PPU just falls out of them.
+const WORLD_UNITS = { w: 2700, h: 1520 };
+const PPU = VIEW.w / WORLD_UNITS.w;
 function U(units){ return units * PPU; }
 
 const ORB_COMBOS = {
@@ -342,45 +558,67 @@ const ORB_COMBOS = {
 };
 
 const SPELLS = {
-  coldsnap:      { name:'Cold Snap',       icon:'❄️', combo:'QQQ', cast:'unit', cd:3,  mana:70,  color:'#3aa0e0' },
+  // Cold Snap: unit-target, real cast range 1000 — enforced in
+  // resolveTargetAndCast() (any 'unit' spell with a `range` field gets a
+  // real max-cast-range check, logging "out of cast range" if you try to
+  // mark something too far away instead of silently reaching infinitely).
+  coldsnap:      { name:'Cold Snap',       icon:'❄️', combo:'QQQ', cast:'unit', cd:3,  mana:70,  color:'#3aa0e0',
+                    range: U(1000) },
   ghostwalk:     { name:'Ghost Walk',      icon:'👻', combo:'QQW', cast:'self', cd:3,  mana:65,  color:'#3aa0e0' },
   // Ice Wall: automatically placed a short distance in front of Invoker along
-  // his current facing (no click-to-target) — real length ~700, thickness ~60
-  // (converted to px via PPU). forwardOffset is a small trainer-tuned raw px
-  // value (not spec-converted) so the wall pops up right in front of Invoker
-  // instead of the real ~250-unit spec distance, which read as too far away.
+  // his current facing (no click-to-target) — real length ~1200, width ~105,
+  // both true-to-scale via U(). forwardOffset stays a small trainer-tuned raw
+  // px "hug distance" (not spec-converted) so the wall pops up right in front
+  // of Invoker rather than requiring a separate ground click.
   icewall:       { name:'Ice Wall',        icon:'🧊', combo:'QQE', cast:'self',cd:3,  mana:70,  color:'#5fd0e8',
-                    length: U(700), thickness: U(60), forwardOffset: 46 },
-  // Tornado: cast range ~1000, travel speed 1000 (real projectileSpeed=1000, radius=200). The
-  // real 200-unit hit radius renders as an oversized solid blob on this compact 960x540 map, so
-  // the drawn/hit half-width is kept at a smaller trainer-tuned size rather than the raw spec value.
+                    length: U(1200), thickness: U(105), forwardOffset: 46 },
+  // Tornado: cast range 1000, travel speed 1000, AoE radius 200 (total width
+  // 400) — every number here is the real, true-to-scale Dota value, no
+  // toned-down "avoid a big blob" shrinking; drawEffects()/drawTargeting()
+  // render the real radius as a translucent filled circle instead.
   tornado:       { name:'Tornado',         icon:'🌪️', combo:'QWW', cast:'point',cd:3, mana:100, color:'#bcd6e0',
-                    range: U(1000), speed: U(1000), halfWidth: U(100) },
-  // Deafening Blast: cast range 1000, travel speed 1100 (real projectileSpeed=1100, startingRadius
-  // 175/endingRadius 225). Same oversized-blob issue as Tornado — half-width kept at a smaller,
-  // trainer-tuned size instead of the raw ~200 spec average.
+                    range: U(1000), speed: U(1000), halfWidth: U(200) },
+  // Deafening Blast: cast range 1000, travel speed 1100. Its corridor widens
+  // in flight — starting radius 175 right as it leaves Invoker, ending radius
+  // 225 at the end of its range — so unlike Tornado's constant width, its
+  // effective halfWidth is interpolated between startRadius/endRadius by
+  // travel progress each frame (see EFFECT_UPDATERS.deafeningblast).
   deafeningblast:{ name:'Deafening Blast', icon:'💥', combo:'QWE', cast:'point',cd:3, mana:150, color:'#c9a7e8',
-                    range: U(1000), speed: U(1100), halfWidth: U(110) },
+                    range: U(1000), speed: U(1100), startRadius: U(175), endRadius: U(225) },
   // Forge Spirit: no-target spell (like Ice Wall) — summons two Forge Spirits
   // right in front of Invoker along his current facing, instead of requiring
   // a ground click. forwardOffset is the same small trainer-tuned raw px
-  // "right in front" distance as Ice Wall (not the real ~300-unit spec value).
+  // "right in front" distance as Ice Wall (not a real spec value — Forge
+  // Spirit isn't actually a no-target spell in real Dota, this is an
+  // intentional trainer simplification from an earlier round). Forge
+  // Spirits are RANGED attackers with a longer attack range than Invoker
+  // himself — see allyAttackRange below (used when they're summoned) and
+  // updateAllies()/updateAllyProjectiles() for their actual ranged-attack
+  // behavior.
   forgespirit:   { name:'Forge Spirit',    icon:'🔥', combo:'QEE', cast:'self',cd:3, mana:110, color:'#e08a3a',
                     forwardOffset: 46 },
-  // EMP: cast range 950, radius 675 (one of the biggest AoEs in the game), 2.6s delay before it pulses
+  // EMP: cast range 950, radius 675 (one of the biggest AoEs in the game —
+  // 1350-unit total diameter, drawn at full true scale so you can see how it
+  // compares to a hero/other spells), 2.9s delay before it pulses.
   emp:           { name:'EMP',             icon:'⚡', combo:'WWW', cast:'point',cd:3, mana:110, color:'#e8c94a',
-                    range: U(950), delay:2.6, radius: U(675) },
+                    range: U(950), delay:2.9, radius: U(675) },
   alacrity:      { name:'Alacrity',        icon:'✨', combo:'WWE', cast:'unit', cd:3,  mana:60,  color:'#e8c94a' },
-  // Sun Strike: effectively global range, radius ~175, long delay before impact
+  // Sun Strike: effectively global range (no `range` field — can be cast
+  // anywhere on the map), true radius 175 (350 total diameter), 1.7s delay
+  // before impact. drawTargeting() also shows a "lead" ghost marker per
+  // enemy — where they'll be in 1.7s if they keep moving at their current
+  // speed/heading — to demonstrate how far ahead a moving target needs
+  // to be aimed.
   sunstrike:     { name:'Sun Strike',      icon:'☀️', combo:'EEE', cast:'point',cd:3, mana:140, color:'#f2a33a',
                     delay:1.7, radius: U(175) },
-  // Chaos Meteor: cast range 700, ~1.3s landing delay, then keeps rolling onward
-  // (away from Invoker) at 300 speed for another ~900 units. The real 275-unit
-  // impact radius rendered as a huge solid blob on this compact 960x540 map, so
-  // it's toned down to a trainer-tuned size (still generous enough to hit
-  // grouped enemies) and drawn as a thinner ring instead of a big filled disc.
+  // Chaos Meteor: cast range 700, ~1.3s landing delay, then keeps rolling
+  // onward (away from Invoker) at true speed 300 units/sec. Real impact
+  // radius 275 (550 total damaging width), drawn at true scale — rollDistance
+  // is an unspecified trainer-tuned cap on how far it's allowed to keep
+  // rolling before despawning (real Dota doesn't hard-cap this), not a spec
+  // value to correct.
   chaosmeteor:   { name:'Chaos Meteor',    icon:'☄️', combo:'WEE', cast:'point',cd:3, mana:150, color:'#e0553a',
-                    range: U(700), speed: U(300), radius: U(200), fallDelay:1.3, rollDistance: U(900) }
+                    range: U(700), speed: U(300), radius: U(275), fallDelay:1.3, rollDistance: U(900) }
 };
 
 // Every scenario chains at least 5 spells (min 5 steps) and, where thematically
@@ -403,8 +641,17 @@ const SCENARIO_TEMPLATES = [
   { title:'Max Damage Combo', desc:'The full burst: Tornado to lift, EMP to drain mana, Sun Strike timed to land as they fall, Chaos Meteor to roll through, Deafening Blast to push them along its path, Cold Snap to mark them, Alacrity for extra attack speed, then finish with an auto attack.', sequence:['tornado','emp','sunstrike','chaosmeteor','deafeningblast','coldsnap','alacrity','attack'], time:90, enemyCount:1 },
   { title:'Sun Strike Finisher', desc:'Tornado to lift, Sun Strike timed to land as they hit the ground, roll a Chaos Meteor through, Deafening Blast to keep them inside it, then Cold Snap and attack once they\'re back on the ground.', sequence:['tornado','sunstrike','chaosmeteor','deafeningblast','coldsnap','attack'], time:70, enemyCount:1 }
 ];
-const FULL_ROTATION = { title:'Full Rotation Drill', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE), then land an auto attack.',
-  sequence:['coldsnap','ghostwalk','icewall','tornado','deafeningblast','forgespirit','emp','alacrity','chaosmeteor','sunstrike','attack'], time:150, enemyCount:2 };
+// Invoking always drops the new spell into slot D and bumps whatever was
+// previously in D down into F (see invoke()). Real high-level Invoker play
+// exploits this by invoking two synergistic spells back-to-back BEFORE
+// casting either one, so both are already loaded — cast the first (now in
+// F) then the second (still in D) with zero re-invoke delay between them.
+// The sequence below is grouped into exactly those pairs so every pair
+// practices a real F→D slot swap instead of always casting from D:
+// Ghost Walk+Cold Snap, Tornado+EMP, Sun Strike+Chaos Meteor,
+// Deafening Blast+Forge Spirit, Ice Wall+Alacrity.
+const FULL_ROTATION = { title:'Full Rotation Drill', desc:'Cast all 10 invoked spells in realistic fight order, invoked in back-to-back pairs so both land in your D/F slots together — cast the first from F, the second from D: Ghost Walk + Cold Snap to approach and mark, Tornado + EMP to lift and drain mana, Sun Strike + Chaos Meteor for a delayed strike with an immediate follow-up, Deafening Blast + Forge Spirit to keep the pressure on, Ice Wall + Alacrity to seal the kill and speed up your attacks, then finish with an auto attack.',
+  sequence:['ghostwalk','coldsnap','tornado','emp','sunstrike','chaosmeteor','deafeningblast','forgespirit','icewall','alacrity','attack'], time:150, enemyCount:2 };
 
 // --- Endless mini-games -------------------------------------------------
 // "Skill Tap": endlessly prompts one random spell (or auto attack) at a
@@ -419,11 +666,11 @@ function randomSkillTapTemplate(){
   const meta = spellMeta(key);
   return { title:'Skill Tap', desc:`Land: ${meta.icon} ${meta.name}`, sequence:[key], time:Infinity, enemyCount:2, endless:true };
 }
-// "Endless Rotation": the same logical QQQ→EEE full-spell rotation as the
+// "Endless Rotation": the same paired-invoke full-spell rotation as the
 // Full Rotation Drill above, but it never ends — completing a lap just
 // starts the next one and bumps the streak counter, for continuous reps.
-const ENDLESS_ROTATION = { title:'Endless Rotation', desc:'Cast all 10 invoked spells at least once, following orb order (QQQ → EEE), then land an auto attack — then do it again, forever.',
-  sequence:['coldsnap','ghostwalk','icewall','tornado','deafeningblast','forgespirit','emp','alacrity','chaosmeteor','sunstrike','attack'], time:Infinity, enemyCount:2, endless:true };
+const ENDLESS_ROTATION = { title:'Endless Rotation', desc:'Cast all 10 invoked spells in realistic fight order, invoked in back-to-back pairs so both land in your D/F slots together — cast the first from F, the second from D: Ghost Walk + Cold Snap to approach and mark, Tornado + EMP to lift and drain mana, Sun Strike + Chaos Meteor for a delayed strike with an immediate follow-up, Deafening Blast + Forge Spirit to keep the pressure on, Ice Wall + Alacrity to seal the kill and speed up your attacks, then an auto attack — then do it again, forever.',
+  sequence:['ghostwalk','coldsnap','tornado','emp','sunstrike','chaosmeteor','deafeningblast','forgespirit','icewall','alacrity','attack'], time:Infinity, enemyCount:2, endless:true };
 
 function comboKeyFromQueue(queue){
   if(queue.length < 3) return null;
@@ -437,21 +684,38 @@ function comboKeyFromQueue(queue){
    Entities
 --------------------------------------------------------------------- */
 const player = {
-  x: WORLD.w/2, y: WORLD.h/2, radius: 14, facing: 0,
-  moveTarget: null, speed: 130,
+  // Real Invoker stats: 27-unit collision hitbox, 280 base movement speed
+  // (both converted through U() like every spell distance, so the hero's
+  // own size/speed sits on the exact same scale as the spells around him).
+  x: WORLD.w/2, y: WORLD.h/2, radius: U(27), facing: 0,
+  moveTarget: null, speed: U(280),
   orbLevels: {q:1,w:1,e:1}, invokeLevel:1,
-  orbQueue: [], slots: [null, null], cooldowns: {}, reinvokeCd: 0,
+  orbQueue: [], slots: [null, null], cooldowns: {},
   invisible:false, buffs:{},
   // Invoker is a ranged hero (real attack range 600) — attackRange uses the
   // same U()/PPU conversion as spell ranges so auto-attack actually reaches
   // out rather than requiring a melee-style walk-up.
   attackTarget: null, attackCd: 0, attackRange: U(600), alacritied: 0
 };
+// Real attack projectile speed (900 units/sec) and attack point (0.4s wind-up
+// before the projectile is actually released) — auto-attacks now simulate
+// both instead of applying damage instantly, so the projectile's travel time
+// is visible at the same true scale as everything else.
+const ATTACK_PROJECTILE_SPEED = U(900);
+const ATTACK_POINT = 0.4;
+// Forge Spirits are ranged attackers with a longer attack range than
+// Invoker's own U(600) — they hold this distance from their target and
+// fire on it rather than closing to melee range.
+const ALLY_ATTACK_RANGE = U(700);
+const ALLY_ATTACK_INTERVAL = 1.1;
+const ALLY_PROJECTILE_SPEED = U(900);
 let enemies = [];
 let effects = [];
 let allies = [];
 let moveClicks = []; // fading right-click/left-click move ping markers
 let attackFx = []; // fading auto-attack impact markers
+let attackProjectiles = []; // in-flight auto-attack projectiles (windup + travel time)
+let allyProjectiles = []; // in-flight Forge Spirit ranged-attack projectiles
 
 // Display-only metadata for the auto-attack "combo step" — it isn't invoked
 // via orbs like the real spells, so it lives outside SPELLS, but scenario
@@ -473,8 +737,33 @@ let lastTemplateTitle = null;
 let score = 0;
 let endlessStreak = 0; // lap/rep counter for the 'tap' and 'endless' endless mini-games
 
-let mode = 'combo'; // 'combo' | 'icewall' | 'tap' | 'endless' | 'guide'
+// Tactical Training state — a frozen decision-puzzle mode, entirely separate
+// from the live-sim state above (no player.hp/mana exists to reuse, so each
+// puzzle below carries its own self-contained Invoker/ally/enemy snapshot).
+let tacticalIndex = 0;
+let tacticalScore = 0;
+let tacticalStreak = 0;
+let tacticalAnswered = false;
+let currentTacticalPuzzle = null;
+let tacticalCategoryStats = {}; // category name -> {sum, count} running average
+// Hybrid real-time mode: a puzzle starts 'frozen' (pure analysis, exactly
+// like before) and switches to 'live' the moment the player takes ANY real
+// action (queues an orb, invokes, casts, attacks, or moves) — at that point
+// the puzzle's own invoker/enemies are spliced straight into the real
+// combo-trainer simulation (same executeSpell/updateEnemy/effects pipeline
+// used everywhere else) so real invoke mechanics genuinely apply. Clicking
+// one of the 4 option buttons still instantly grades at any time, live or not.
+let tacticalPhase = 'frozen'; // 'frozen' | 'live' — only meaningful while mode==='tactical'
+let tacticalAllies = []; // puzzle hero-teammates while live (NOT the same as the live allies[] Forge Spirit array)
+let tacticalLiveDeadline = 0; // performance.now() timestamp; hesitating past this auto-grades as "waited too long"
+const TACTICAL_LIVE_TIMEOUT = 14000; // ms of live play with no decisive action before it counts as hesitation
+
+let mode = 'combo'; // 'combo' | 'icewall' | 'tap' | 'endless' | 'timetrial' | 'orbshift' | 'chain' | 'tactical' | 'help'
 let iceWallDrill = { attempts:0, hits:0, lastResult:null };
+// Selectable example enemy movement speed (real Dota units/sec) — lets you
+// feel out projectile-lead/kiting distances against slow vs. very fast
+// targets instead of a single fixed/random enemy speed.
+let enemySpeedSetting = 300;
 
 /* ---------------------------------------------------------------------
    Coordinate helpers
@@ -521,11 +810,12 @@ function spawnEnemy(special, count){
       tries++;
     } while(enemies.some(o => dist({x:ex,y:ey}, o) < 90) && tries < 12);
     const e = {
-      x: ex, y: ey, radius: 14, speed: rand(90,170),
+      x: ex, y: ey, radius: U(27), speed: U(enemySpeedSetting),
       hp: 500, hpMax: 500,
       state: special === 'wall-block' ? 'flee' : (Math.random() < 0.5 ? 'patrol' : 'idle'),
       airborne: { active:false, timer:0, duration:0 },
       stunTimer: 0, chilled:0, alacritied:0, wallSlow:0,
+      portraitKey: (i % 2 === 0) ? 'a' : 'b',
       _toB: true
     };
     e.patrolA = { x: e.x, y: e.y };
@@ -552,13 +842,12 @@ function startScenario(template){
   // reset player
   player.x = WORLD.w/2; player.y = WORLD.h/2;
   player.moveTarget = null;
-  player.speed = rand(110, 155);
+  player.speed = U(280); // real Invoker base move speed — no longer randomized per scenario
   player.orbLevels = { q: randInt(1,7), w: randInt(1,7), e: randInt(1,7) };
   player.invokeLevel = randInt(1,5);
   player.orbQueue = [];
   player.slots = [null, null];
   player.cooldowns = {};
-  player.reinvokeCd = 0;
   player.invisible = false;
   player.buffs = {};
   player.attackTarget = null;
@@ -656,10 +945,14 @@ function checkProgress(spellKey, silentMiss, hitCount){
 
 function completeScenario(){
   scenario.active = false;
-  const bonus = Math.round((isFinite(scenario.timeLeft) ? scenario.timeLeft : 30) * 10) + 100;
-  score += bonus;
-  document.getElementById('scoreText').textContent = score;
-  log(`★ Scenario complete! +${bonus} points`);
+  if(mode === 'timetrial'){
+    log(`\u2605 Combo complete!`);
+  } else {
+    const bonus = Math.round((isFinite(scenario.timeLeft) ? scenario.timeLeft : 30) * 10) + 100;
+    score += bonus;
+    document.getElementById('scoreText').textContent = score;
+    log(`\u2605 Scenario complete! +${bonus} points`);
+  }
   flashOverlay('COMBO COMPLETE!', '#6adf8e');
   if(scenario.endless){
     endlessStreak++;
@@ -669,6 +962,8 @@ function completeScenario(){
       if(mode !== modeAtComplete) return;
       startScenario(mode === 'tap' ? randomSkillTapTemplate() : ENDLESS_ROTATION);
     }, 450);
+  } else if(mode === 'timetrial'){
+    finishTimeTrialAttempt();
   } else {
     scheduleAutoAdvance();
   }
@@ -683,6 +978,97 @@ function failScenario(){
   log(`✘ Scenario failed — time expired. Hit Retry to try again.`);
   flashOverlay("TIME'S UP", '#e0553a');
   scheduleAutoAdvance();
+}
+
+/* ---------------------------------------------------------------------
+   Time Trial: pick any combo from the same pool Combo Trainer draws from,
+   run the identical live simulator (heroes, skill activation, orb queue),
+   and time how long a clean execution takes. History is kept per combo
+   (by title) in localStorage so last-attempt/average/progress persist
+   across reloads.
+--------------------------------------------------------------------- */
+let ttStartTime = 0;
+function loadTimeTrialHistory(){
+  try { return JSON.parse(localStorage.getItem('invoTimeTrialHistory')) || {}; }
+  catch(e){ return {}; }
+}
+function saveTimeTrialHistory(){
+  try { localStorage.setItem('invoTimeTrialHistory', JSON.stringify(timeTrialHistory)); }
+  catch(e){ /* storage unavailable — history just won't persist across reloads */ }
+}
+let timeTrialHistory = loadTimeTrialHistory();
+
+function populateTimeTrialSelect(){
+  const sel = document.getElementById('ttComboSelect');
+  if(sel.dataset.built) return;
+  sel.dataset.built = '1';
+  sel.innerHTML = SCENARIO_TEMPLATES.map(t => `<option value="${t.title}">${t.title}</option>`).join('');
+  sel.onchange = () => previewTimeTrialCombo(sel.value);
+}
+
+// Shows the picked combo's steps and this-combo stats before the player has
+// hit Start (or after an attempt finishes) — no live scenario is running yet.
+function previewTimeTrialCombo(title){
+  const tpl = SCENARIO_TEMPLATES.find(t => t.title === title) || SCENARIO_TEMPLATES[0];
+  document.getElementById('objTitle').textContent = tpl.title;
+  document.getElementById('objDesc').textContent = tpl.desc;
+  document.getElementById('chips').innerHTML = tpl.sequence.map(k => {
+    const s = spellMeta(k);
+    return `<div class="chip">${s.icon} ${s.name}</div>`;
+  }).join('');
+  document.getElementById('positionStatus').style.display = 'none';
+  document.getElementById('timerText').textContent = '--';
+  updateTimeTrialStatsUI(tpl.title);
+}
+
+function startTimeTrialRun(){
+  const title = document.getElementById('ttComboSelect').value;
+  const tpl = SCENARIO_TEMPLATES.find(t => t.title === title) || SCENARIO_TEMPLATES[0];
+  // Clone with time:Infinity so failScenario() (time-expired) never fires —
+  // Time Trial has no fail state, only a stopwatch.
+  startScenario(Object.assign({}, tpl, { time: Infinity }));
+  ttStartTime = performance.now();
+}
+
+function finishTimeTrialAttempt(){
+  const title = scenario.title;
+  const elapsedMs = performance.now() - ttStartTime;
+  if(!timeTrialHistory[title]) timeTrialHistory[title] = [];
+  timeTrialHistory[title].push(elapsedMs);
+  if(timeTrialHistory[title].length > 20) timeTrialHistory[title].shift();
+  saveTimeTrialHistory();
+  updateTimeTrialStatsUI(title);
+}
+
+function updateTimeTrialStatsUI(title){
+  const hist = timeTrialHistory[title] || [];
+  const last = hist.length ? hist[hist.length - 1] : null;
+  const avgSample = hist.slice(-5);
+  const avg = avgSample.length ? avgSample.reduce((a,b) => a+b, 0) / avgSample.length : null;
+  document.getElementById('ttLast').textContent = last != null ? (last/1000).toFixed(1) + 's' : '—';
+  document.getElementById('ttAvg').textContent = avg != null ? (avg/1000).toFixed(1) + 's' : '—';
+  renderTimeTrialGraph(hist);
+}
+
+function renderTimeTrialGraph(hist){
+  const svg = document.getElementById('ttGraph');
+  if(!hist.length){
+    svg.innerHTML = '<text x="150" y="25" fill="#5b6472" font-size="11" text-anchor="middle">No attempts yet</text>';
+    return;
+  }
+  const recent = hist.slice(-10);
+  const w = 300, h = 44, pad = 6;
+  const times = recent.map(ms => ms/1000);
+  const minT = Math.min(...times), maxT = Math.max(...times);
+  const range = (maxT - minT) || 1;
+  const pts = times.map((t,i) => {
+    const x = recent.length === 1 ? w/2 : pad + (i/(recent.length-1)) * (w - pad*2);
+    // Faster (lower) times plot higher — reads as "progress going up".
+    const y = pad + (1 - (t - minT)/range) * (h - pad*2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const dots = pts.map(p => { const [x,y] = p.split(','); return `<circle cx="${x}" cy="${y}" r="2.5" fill="#dfe4ea"/>`; }).join('');
+  svg.innerHTML = `<polyline points="${pts.join(' ')}" fill="none" stroke="#6adf8e" stroke-width="2"/>${dots}`;
 }
 
 let autoAdvanceTimer = null;
@@ -712,30 +1098,63 @@ function scheduleAutoAdvance(seconds){
 function switchMode(m){
   mode = m;
   cancelAutoAdvance();
-  const isComboLike = (m === 'combo' || m === 'tap' || m === 'endless');
+  cancelOrbShiftAutoAdvance();
+  cancelChainAutoAdvance();
+  const isComboLike = (m === 'combo' || m === 'tap' || m === 'endless' || m === 'timetrial');
+  const isOrbTrainer = (m === 'orbshift' || m === 'chain');
   document.getElementById('tabCombo').classList.toggle('active', m === 'combo');
   document.getElementById('tabIceWall').classList.toggle('active', m === 'icewall');
   document.getElementById('tabTap').classList.toggle('active', m === 'tap');
   document.getElementById('tabEndless').classList.toggle('active', m === 'endless');
-  document.getElementById('tabGuide').classList.toggle('active', m === 'guide');
-  document.getElementById('objective-panel').style.display = m === 'guide' ? 'none' : '';
+  document.getElementById('tabTimeTrial').classList.toggle('active', m === 'timetrial');
+  document.getElementById('tabOrbShift').classList.toggle('active', m === 'orbshift');
+  document.getElementById('tabChain').classList.toggle('active', m === 'chain');
+  document.getElementById('tabTactical').classList.toggle('active', m === 'tactical');
+  document.getElementById('tabHelp').classList.toggle('active', m === 'help');
+  // Help (Spellbook + Combo Guide) is a pure reference panel — no scenario,
+  // no canvas, no hotkey rig, just scrollable read-only lists.
+  const isReference = (m === 'help');
+  document.getElementById('objective-panel').style.display = isReference ? 'none' : '';
   document.getElementById('comboPanel').style.display = isComboLike ? '' : 'none';
   document.getElementById('icewallPanel').style.display = m === 'icewall' ? '' : 'none';
-  document.getElementById('guidePanel').style.display = m === 'guide' ? '' : 'none';
-  document.getElementById('canvas-wrap').style.display = m === 'guide' ? 'none' : '';
-  document.getElementById('hud-bottom').style.display = m === 'guide' ? 'none' : '';
-  document.getElementById('log').style.display = m === 'guide' ? 'none' : '';
+  document.getElementById('tacticalPanel').style.display = m === 'tactical' ? '' : 'none';
+  document.getElementById('orbShiftPanel').style.display = m === 'orbshift' ? '' : 'none';
+  document.getElementById('chainPanel').style.display = m === 'chain' ? '' : 'none';
+  document.getElementById('helpPanel').style.display = m === 'help' ? '' : 'none';
+  // Orb Shift / Invoke Chain are pure orb-input drills — no battlefield, no
+  // enemies, nothing useful for the canvas to show — so, like Help,
+  // they hide the whole canvas and rely entirely on the panel above plus
+  // the Q/W/E/R invoke rig below.
+  document.getElementById('canvas-wrap').style.display = (isReference || isOrbTrainer) ? 'none' : '';
+  // Tactical Training shows a frozen battlefield snapshot, not the live
+  // combo-execution sim — it has no use for the Q/W/E/R/A/S/D/F hotkey rig,
+  // the scrolling log (feedback has its own panel instead), or the enemy
+  // move-speed selector (enemies don't move in a snapshot).
+  document.getElementById('hud-bottom').style.display = (isReference || m === 'tactical') ? 'none' : '';
+  // Orb Shift / Invoke Chain only ever use the top Q/W/E/R row — there's no
+  // attack and no spell slots to cast from, so the bottom A/S/D/F row is
+  // dead weight and gets hidden.
+  document.querySelector('.hud-row-bottom').style.display = isOrbTrainer ? 'none' : '';
+  document.getElementById('log').style.display = (isReference || m === 'tactical') ? 'none' : '';
+  document.getElementById('enemySpeedBar').style.display = (m === 'tactical' || isOrbTrainer) ? 'none' : '';
+  document.getElementById('hint-bar').style.display = (m === 'tactical' || isOrbTrainer) ? 'none' : '';
   // Endless modes ('tap'/'endless') just loop the same mini-game forever —
   // hide the random-scenario controls (which would yank you into an
   // unrelated combo scenario) and show a streak counter + reset button instead.
-  document.getElementById('controls').style.display = (m === 'tap' || m === 'endless') ? 'none' : '';
+  // Time Trial reuses the same combo-execution sim/HUD but replaces the
+  // random-scenario controls with a combo picker + start button, and shows
+  // a per-combo last/average/graph readout instead of the score counter.
+  document.getElementById('controls').style.display = (m === 'tap' || m === 'endless' || m === 'timetrial') ? 'none' : '';
   document.getElementById('endlessControls').style.display = (m === 'tap' || m === 'endless') ? '' : 'none';
   document.getElementById('streakStat').style.display = (m === 'tap' || m === 'endless') ? '' : 'none';
+  document.getElementById('ttControls').style.display = m === 'timetrial' ? '' : 'none';
+  document.getElementById('ttStatsGraph').style.display = m === 'timetrial' ? '' : 'none';
   targetingSpell = null;
   pendingReleaseSlot = null;
   effects = [];
-  if(m === 'guide'){
+  if(m === 'help'){
     if(scenario) scenario.active = false;
+    renderSpellbook();
     renderComboGuide();
   } else if(m === 'icewall'){
     if(scenario) scenario.active = false;
@@ -748,6 +1167,19 @@ function switchMode(m){
     endlessStreak = 0;
     updateEndlessStreakUI();
     startScenario(ENDLESS_ROTATION);
+  } else if(m === 'timetrial'){
+    if(scenario) scenario.active = false;
+    populateTimeTrialSelect();
+    previewTimeTrialCombo(document.getElementById('ttComboSelect').value);
+  } else if(m === 'orbshift'){
+    if(scenario) scenario.active = false;
+    startOrbShiftChallenge();
+  } else if(m === 'chain'){
+    if(scenario) scenario.active = false;
+    startChainChallenge();
+  } else if(m === 'tactical'){
+    if(scenario) scenario.active = false;
+    startTacticalPuzzle(tacticalIndex);
   } else {
     startScenario(currentTemplate || randomTemplate());
   }
@@ -813,45 +1245,126 @@ function renderComboGuide(){
   el.innerHTML = html;
 }
 
+// Display order/grouping for the Spellbook: dominant orb first (both
+// copies), then the third orb, grouped Quas-dominant -> Wex-dominant ->
+// Exort-dominant -> the one all-different combo last. The `combo` string
+// here is purely a display re-ordering of the same letters used for
+// SPELLS[key].combo (queue identity only depends on the multiset of orbs,
+// never press order, so this doesn't change any game logic).
+const SPELLBOOK_ORDER = [
+  { key:'coldsnap',      combo:'QQQ' },
+  { key:'ghostwalk',     combo:'QQW' },
+  { key:'icewall',       combo:'QQE' },
+  { key:'emp',           combo:'WWW' },
+  { key:'tornado',       combo:'WWQ' },
+  { key:'alacrity',      combo:'WWE' },
+  { key:'sunstrike',     combo:'EEE' },
+  { key:'forgespirit',   combo:'EEQ' },
+  { key:'chaosmeteor',   combo:'EEW' },
+  { key:'deafeningblast',combo:'QWE' }
+];
+
+function renderSpellbook(){
+  const el = document.getElementById('spellbookList');
+  if(el.dataset.built) return;
+  el.dataset.built = '1';
+  const CAST_LABELS = { self:'No-target', unit:'Unit-target', point:'Point-target' };
+  el.innerHTML = SPELLBOOK_ORDER.map(({key, combo}) => {
+    const meta = SPELLS[key];
+    const chips = combo.toLowerCase().split('').map(l => orbChipHtml(l, true)).join('');
+    return `<div style="display:flex;align-items:center;gap:12px;background:#1c222c;border:1px solid #333c4a;border-radius:6px;padding:6px 10px;">
+      <div style="font-size:12.5px;color:#dfe4ea;min-width:160px;"><span style="font-size:16px;">${meta.icon}</span> <span style="font-weight:600;">${meta.name}</span></div>
+      <div style="display:flex;gap:4px;align-items:center;">${chips}</div>
+      <div style="font-size:11px;color:#8b95a5;margin-left:auto;">${CAST_LABELS[meta.cast] || meta.cast}</div>
+    </div>`;
+  }).join('');
+}
+
 function startIceWallDrill(){
   iceWallDrill = { attempts:0, hits:0, lastResult:null };
   updateIceWallUI();
-  log('Ice Wall Precision Drill started — invoke Ice Wall (Q Q E) then cast it on the enemy.');
+  log('Ice Wall Precision Drill started — invoke Ice Wall (Q Q E) then cast it across both enemies.');
   newIceWallAttempt();
 }
 
 function newIceWallAttempt(){
+  // If a still-unresolved Ice Wall cast is being abandoned (e.g. the player
+  // hits "New Position" before the next update tick would have scored it),
+  // credit it as a miss rather than silently discarding the attempt — this
+  // used to let misses vanish without ever hitting the attempts counter.
+  effects.forEach(ef => {
+    if(ef.type === 'icewall' && !ef.scored){
+      ef.scored = true;
+      iceWallDrill.attempts++;
+      iceWallDrill.lastResult = false;
+      log('✘ Ice Wall abandoned before landing — counted as a miss.');
+    }
+  });
   effects = effects.filter(ef => ef.type !== 'icewall');
   allies = [];
   moveClicks = [];
   targetingSpell = null;
 
   const margin = 70;
-  player.x = rand(margin, WORLD.w - margin);
-  player.y = rand(margin, WORLD.h - margin);
   player.moveTarget = null;
   player.attackTarget = null;
   player.cooldowns.icewall = 0;
 
-  let ex, ey;
-  do {
-    ex = rand(margin, WORLD.w - margin);
-    ey = rand(margin, WORLD.h - margin);
-  } while(dist({x:ex,y:ey}, player) < 130);
-
-  enemies = [{
-    x: ex, y: ey, radius: 14, speed: 0, hp: 500, hpMax: 500,
+  const makeStationaryEnemy = (x, y) => ({
+    x, y, radius: 14, speed: 0, hp: 500, hpMax: 500,
     state: 'idle', airborne: { active:false, timer:0, duration:0 },
     stunTimer:0, chilled:0, alacritied:0, wallSlow:0
-  }];
+  });
+
+  const e1x = rand(margin, WORLD.w - margin);
+  const e1y = rand(margin, WORLD.h - margin);
+
+  // Second enemy is placed within a radius the wall can actually span (so
+  // a well-aimed cast can always catch both), but far enough apart that
+  // lining them both up still takes real positioning/facing precision.
+  const wallLen = SPELLS.icewall.length;
+  const minSpread = 70, maxSpread = wallLen * 0.55;
+  let e2x, e2y, tries = 0;
+  do {
+    const a = rand(0, Math.PI*2);
+    const r = rand(minSpread, maxSpread);
+    e2x = clamp(e1x + Math.cos(a)*r, margin, WORLD.w - margin);
+    e2y = clamp(e1y + Math.sin(a)*r, margin, WORLD.h - margin);
+    tries++;
+  } while(dist({x:e2x,y:e2y}, {x:e1x,y:e1y}) < minSpread && tries < 30);
+
+  // Invoker spawns close to the enemy pair — not clear across the map —
+  // so the drill tests facing/timing precision rather than navigation.
+  // Still kept a minimum distance from both so landing the wall on top of
+  // them takes real aim, not just standing in the middle of it.
+  const clusterX = (e1x + e2x) / 2, clusterY = (e1y + e2y) / 2;
+  const nearMin = 130, nearMax = 320;
+  let px, py, ptries = 0;
+  do {
+    const a = rand(0, Math.PI*2);
+    const r = rand(nearMin, nearMax);
+    px = clamp(clusterX + Math.cos(a)*r, margin, WORLD.w - margin);
+    py = clamp(clusterY + Math.sin(a)*r, margin, WORLD.h - margin);
+    ptries++;
+  } while((dist({x:px,y:py}, {x:e1x,y:e1y}) < nearMin || dist({x:px,y:py}, {x:e2x,y:e2y}) < nearMin) && ptries < 30);
+  player.x = px;
+  player.y = py;
+
+  enemies = [makeStationaryEnemy(e1x, e1y), makeStationaryEnemy(e2x, e2y)];
   updateCamera();
 }
 
-function recordIceWallResult(hit){
+function recordIceWallResult(hit, hitCount, totalCount){
   iceWallDrill.attempts++;
   if(hit) iceWallDrill.hits++;
   iceWallDrill.lastResult = hit;
-  log(hit ? '✔ Ice Wall landed directly on the hero!' : '✘ Ice Wall missed the hero.');
+  const total = totalCount != null ? totalCount : enemies.length;
+  const count = hitCount != null ? hitCount : (hit ? total : 0);
+  if(hit){
+    log('✔ Ice Wall landed across both heroes!');
+  } else {
+    log(count > 0 ? `✘ Ice Wall only caught ${count} of ${total} heroes.` : '✘ Ice Wall missed both heroes.');
+  }
   updateIceWallUI();
   flashOverlay(hit ? 'WALL ON TARGET!' : 'MISSED', hit ? '#6adf8e' : '#e0553a');
   setTimeout(()=>{ if(mode === 'icewall') newIceWallAttempt(); }, 1400);
@@ -873,6 +1386,7 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 // Shared by mouse left-click and touch tap — "tapping on screen is
 // equivalent to mouse click": attack-move onto an enemy, or a plain move.
 function handleLeftClickAt(world){
+  if(mode === 'tactical') enterTacticalLive();
   if(targetingSpell && targetingSlot !== null && slotCastMode[targetingSlot] === 'normal'){
     resolveTargetAndCast(targetingSpell, world);
     targetingSpell = null;
@@ -884,9 +1398,15 @@ function handleLeftClickAt(world){
       if(d < en.radius + 12 && d < nd){ nd = d; target = en; }
     }
     if(target){
+      if(mode === 'tactical' && !tacticalAnswered && player.attackTarget !== target){
+        gradeTacticalAction(findMatchingOption(currentTacticalPuzzle, { type:'attack', unit: target }), { type:'attack' });
+      }
       player.attackTarget = target;
       player.moveTarget = null;
     } else {
+      if(mode === 'tactical' && !tacticalAnswered){
+        gradeTacticalAction(findMatchingOption(currentTacticalPuzzle, { type:'move' }), { type:'move' });
+      }
       player.attackTarget = null;
       player.moveTarget = { x: world.x, y: world.y };
       moveClicks.push({ x: world.x, y: world.y, life: 0.5 });
@@ -894,16 +1414,34 @@ function handleLeftClickAt(world){
   }
 }
 
-// 'A' key / on-screen A button — auto-attack the nearest enemy without
-// needing to click on it first, same as attack-clicking it directly.
+// 'A' key / on-screen A button — auto-attack whichever enemy is closest to
+// the CURSOR (not the player) without needing to click on it first, same as
+// attack-clicking it directly — lets you pick a specific target out of a
+// multi-enemy scenario just by aiming, like Dota's smart-cast/nearest-to-
+// cursor targeting.
 function attackNearestEnemy(){
+  if(mode === 'tactical') enterTacticalLive();
   let target = null, nd = Infinity;
   for(const en of enemies){
-    const d = dist(player, en);
+    const d = dist(mouseWorld, en);
     if(d < nd){ nd = d; target = en; }
   }
   if(target){
-    player.attackTarget = target;
+    if(player.attackTarget !== target){
+      // Only interrupt the current swing when actually changing targets —
+      // if a windup/backswing attack is still in flight (not yet launched)
+      // against the OLD target, cancel it so Invoker breaks off immediately
+      // instead of letting it fire at an enemy you just un-targeted.
+      // Re-pressing attack on the SAME target you're already on should not
+      // interrupt anything.
+      for(let i = attackProjectiles.length-1; i>=0; i--){
+        if(!attackProjectiles[i].launched) attackProjectiles.splice(i,1);
+      }
+      if(mode === 'tactical' && !tacticalAnswered){
+        gradeTacticalAction(findMatchingOption(currentTacticalPuzzle, { type:'attack', unit: target }), { type:'attack' });
+      }
+      player.attackTarget = target;
+    }
     player.moveTarget = null;
   } else {
     log('No enemy to attack.');
@@ -913,11 +1451,13 @@ function attackNearestEnemy(){
 // 'S' key / on-screen S button — Dota-style stop command: cancel movement
 // and attacking, holding position right where the player currently is.
 function stopPlayer(){
+  if(mode === 'tactical') enterTacticalLive();
   player.attackTarget = null;
   player.moveTarget = null;
 }
 
 canvas.addEventListener('mousedown', evt => {
+  if(mode === 'tactical') enterTacticalLive();
   const world = canvasEventToWorld(evt);
   mouseWorld = world;
   if(evt.button === 2){ // right click — move / cancel targeting
@@ -927,6 +1467,9 @@ canvas.addEventListener('mousedown', evt => {
       pendingReleaseSlot = null;
       log('Targeting cancelled.');
     } else {
+      if(mode === 'tactical' && !tacticalAnswered){
+        gradeTacticalAction(findMatchingOption(currentTacticalPuzzle, { type:'move' }), { type:'move' });
+      }
       player.attackTarget = null;
       player.moveTarget = { x: world.x, y: world.y };
       moveClicks.push({ x: world.x, y: world.y, life: 0.5 });
@@ -976,6 +1519,7 @@ window.addEventListener('mousemove', evt => {
 });
 
 window.addEventListener('keydown', evt => {
+  if(mode === 'tactical') enterTacticalLive();
   const k = evt.key.toLowerCase();
   if(k === 'q' || k === 'w' || k === 'e'){ addOrb(k); evt.preventDefault(); }
   else if(k === 'r'){ invoke(); evt.preventDefault(); }
@@ -1017,8 +1561,44 @@ document.getElementById('tabCombo').onclick = ()=> switchMode('combo');
 document.getElementById('tabIceWall').onclick = ()=> switchMode('icewall');
 document.getElementById('tabTap').onclick = ()=> switchMode('tap');
 document.getElementById('tabEndless').onclick = ()=> switchMode('endless');
-document.getElementById('tabGuide').onclick = ()=> switchMode('guide');
+document.getElementById('tabOrbShift').onclick = ()=> switchMode('orbshift');
+document.getElementById('tabChain').onclick = ()=> switchMode('chain');
+document.getElementById('tabTactical').onclick = ()=> switchMode('tactical');
+document.getElementById('tabHelp').onclick = ()=> switchMode('help');
+document.getElementById('tabTimeTrial').onclick = ()=> switchMode('timetrial');
+document.getElementById('ttStartBtn').onclick = ()=> startTimeTrialRun();
 document.getElementById('iwNewBtn').onclick = ()=> newIceWallAttempt();
+document.getElementById('tacNewBtn').onclick = ()=> startTacticalPuzzle(randomTacticalIndex());
+document.getElementById('osNewBtn').onclick = ()=> startOrbShiftChallenge();
+document.getElementById('osAutoAdvance').onchange = (e) => {
+  orbShiftAutoAdvance = e.target.checked;
+  if(orbShiftAutoAdvance && orbShiftState && orbShiftState.done) scheduleOrbShiftAutoAdvance();
+  else {
+    cancelOrbShiftAutoAdvance();
+    const label = document.getElementById('osAutoAdvanceLabel');
+    if(label) label.textContent = '';
+  }
+};
+document.getElementById('icNewBtn').onclick = ()=> startChainChallenge();
+document.getElementById('icDiffBeginner').onclick = ()=> startChainChallenge('beginner');
+document.getElementById('icDiffIntermediate').onclick = ()=> startChainChallenge('intermediate');
+document.getElementById('icDiffAdvanced').onclick = ()=> startChainChallenge('advanced');
+document.getElementById('icAutoAdvance').onchange = (e) => {
+  chainAutoAdvance = e.target.checked;
+  if(chainAutoAdvance && chainState && chainState.done) scheduleChainAutoAdvance(chainState.tier === 'bad');
+  else {
+    cancelChainAutoAdvance();
+    const label = document.getElementById('icAutoAdvanceLabel');
+    if(label) label.textContent = '';
+  }
+};
+
+document.getElementById('enemySpeedSelect').addEventListener('change', (evt) => {
+  enemySpeedSetting = Number(evt.target.value);
+  // Apply immediately to whatever enemies are currently on the field, not
+  // just future spawns, so the change is felt right away.
+  for(const en of enemies) en.speed = U(enemySpeedSetting);
+});
 
 // --- Fullscreen (mobile landscape) ---------------------------------------
 // Q/W/E/R/D/F on mobile are just the same #hud-bottom buttons used on
@@ -1083,12 +1663,15 @@ updateCastDropdownUI(0);
 updateCastDropdownUI(1);
 
 function addOrb(letter){
+  if(mode === 'tactical') enterTacticalLive();
   player.orbQueue.push(letter);
   if(player.orbQueue.length > 3) player.orbQueue.shift();
+  if(mode === 'orbshift') orbShiftHandleOrb(letter);
+  else if(mode === 'chain') chainHandleOrb(letter);
 }
 
 function invoke(){
-  if(player.reinvokeCd > 0){ log('Invoke recovering...'); return; }
+  if(mode === 'tactical') enterTacticalLive();
   const comboKey = comboKeyFromQueue(player.orbQueue);
   if(!comboKey){ log('Queue 3 orbs (Q/W/E) first.'); return; }
   const spellKey = ORB_COMBOS[comboKey];
@@ -1101,8 +1684,10 @@ function invoke(){
     player.slots[1] = player.slots[0];
     player.slots[0] = spellKey;
   }
-  player.reinvokeCd = Math.max(0.35, 1.1 - player.invokeLevel * 0.13);
   log(`Invoked ${SPELLS[spellKey].name} into slot D.`);
+
+  if(mode === 'orbshift') orbShiftHandleInvoke(spellKey);
+  else if(mode === 'chain') chainHandleInvoke(spellKey);
 }
 
 function canCast(key){
@@ -1124,6 +1709,7 @@ function refundMissedCast(key){
 // click-to-confirm / quick-cast on press / quick-cast on release) is set per
 // slot via the small dropdown under each ability icon, just like in Dota.
 function startCast(slotIdx){
+  if(mode === 'tactical') enterTacticalLive();
   const key = player.slots[slotIdx];
   if(!key){ log('No spell in that slot.'); return; }
   const meta = SPELLS[key];
@@ -1168,6 +1754,13 @@ function resolveTargetAndCast(key, worldPoint){
     for(const en of enemies){ const d = dist(worldPoint, en); if(d < nd){ nd = d; nearest = en; } }
     if(!nearest && dist(worldPoint, player) < 60) nearest = player;
     if(!nearest){ log('No unit near cursor — cast cancelled.'); return; }
+    // Real cast range check (e.g. Cold Snap's 1000-unit range) — some
+    // unit-target spells (Alacrity) don't specify a `range`, meaning
+    // unlimited/self-only in this trainer, so this only gates spells that
+    // actually define one.
+    if(meta.range && dist(player, nearest) > meta.range){
+      log(`${meta.name} target is out of cast range.`); return;
+    }
     if(nearest !== player) player.facing = angleTo(player, nearest); // snap to face the target, like Dota
     executeSpell(key, { unit: nearest });
   } else if(meta.cast === 'point'){
@@ -1187,6 +1780,13 @@ function resolveTargetAndCast(key, worldPoint){
 function executeSpell(key, target){
   const meta = SPELLS[key];
   player.cooldowns[key] = meta.cd;
+
+  if(mode === 'tactical' && !tacticalAnswered){
+    gradeTacticalAction(
+      findMatchingOption(currentTacticalPuzzle, { type:'cast', spell:key, unit: target.unit || null, point: target.point || null }),
+      { type:'cast', spell:key }
+    );
+  }
 
   if(target.point){ player.facing = angleTo(player, target.point); }
 
@@ -1225,9 +1825,14 @@ function executeSpell(key, target){
     }
     case 'forgespirit': {
       // No-target: summon just ahead of Invoker along his current facing.
+      // Each spirit is a ranged attacker (ALLY_ATTACK_RANGE, longer than
+      // Invoker's own attack range) — see updateAllies()/updateAllyProjectiles().
       const fx = player.x + Math.cos(player.facing)*meta.forwardOffset;
       const fy = player.y + Math.sin(player.facing)*meta.forwardOffset;
-      allies.push({ x: fx, y: fy, radius:9, life: 20, speed: 90 });
+      allies.push({ x: fx, y: fy, radius:9, life: 20, speed: 90,
+        attackRange: ALLY_ATTACK_RANGE, attackCd: 0, dmg: 30 });
+      allies.push({ x: fx+20, y: fy+10, radius:9, life: 20, speed: 90,
+        attackRange: ALLY_ATTACK_RANGE, attackCd: 0, dmg: 30 });
       allies.push({ x: fx+20, y: fy+10, radius:9, life: 20, speed: 90 });
       log('Forge Spirits summoned just ahead of you.');
       checkProgress('forgespirit'); break;
@@ -1241,8 +1846,12 @@ function executeSpell(key, target){
     }
     case 'deafeningblast': {
       const a = angleTo(player, target.point);
+      // Corridor widens from startRadius to endRadius over its flight — see
+      // EFFECT_UPDATERS.deafeningblast, which recomputes halfWidth from
+      // travel progress every frame. Seed it at startRadius here.
       effects.push({ type:'deafeningblast', x: player.x, y: player.y, dx: Math.cos(a), dy: Math.sin(a),
-        dist:0, maxDist: meta.range, speed: meta.speed, halfWidth: meta.halfWidth, hitSet: new Set(), spellKey:key });
+        dist:0, maxDist: meta.range, speed: meta.speed, halfWidth: meta.startRadius,
+        startRadius: meta.startRadius, endRadius: meta.endRadius, hitSet: new Set(), spellKey:key });
       log('Deafening Blast fired.');
       break;
     }
@@ -1303,6 +1912,10 @@ const EFFECT_UPDATERS = {
   },
   deafeningblast(ef, dt){
     ef.x += ef.dx*ef.speed*dt; ef.y += ef.dy*ef.speed*dt; ef.dist += ef.speed*dt;
+    // Corridor widens from startRadius (right as it leaves Invoker) to
+    // endRadius (at max range) — recompute the true current half-width
+    // every frame from travel progress, for both hit-testing and rendering.
+    ef.halfWidth = ef.startRadius + (ef.endRadius - ef.startRadius) * clamp(ef.dist/ef.maxDist, 0, 1);
     for(const en of enemies){
       if(!ef.hitSet.has(en) && dist(ef, en) < en.radius + ef.halfWidth){
         ef.hitSet.add(en);
@@ -1380,12 +1993,10 @@ const EFFECT_UPDATERS = {
   },
   icewall(ef, dt){
     ef.life -= dt;
-    let hitThisFrame = false;
     for(const en of enemies){
       const d = pointToSegmentDist(en, ef.p1, ef.p2);
       if(d < SPELLS.icewall.thickness/2 + en.radius){
         en.wallSlow = 1.2;
-        hitThisFrame = true;
         if(!ef.hitSet.has(en)){
           ef.hitSet.add(en);
           // Progress the objective chain in any of the active scenario-driven
@@ -1398,8 +2009,14 @@ const EFFECT_UPDATERS = {
       }
     }
     if(mode === 'icewall' && !ef.scored){
-      if(hitThisFrame){ ef.scored = true; recordIceWallResult(true); }
-      else if(ef.life <= 0){ ef.scored = true; recordIceWallResult(false); }
+      // Enemies in this drill are stationary and so is the wall once placed,
+      // so the outcome is fully knowable on the very first tick — resolve
+      // immediately instead of waiting out the wall's full lifetime. This
+      // means misses get credited to the attempt counter just as promptly
+      // as hits (previously only life-expiry counted a miss, which could be
+      // skipped entirely by starting a new attempt early).
+      ef.scored = true;
+      recordIceWallResult(ef.hitSet.size >= enemies.length, ef.hitSet.size, enemies.length);
     }
     return ef.life > 0;
   }
@@ -1418,7 +2035,6 @@ function updateEffects(dt){
 --------------------------------------------------------------------- */
 function updatePlayer(dt){
   for(const k in player.cooldowns){ if(player.cooldowns[k] > 0) player.cooldowns[k] = Math.max(0, player.cooldowns[k]-dt); }
-  player.reinvokeCd = Math.max(0, player.reinvokeCd - dt);
 
   if(player.buffs.ghostwalk){
     player.buffs.ghostwalk -= dt;
@@ -1473,8 +2089,17 @@ function attackIntervalFor(){
 
 function performAttack(target){
   player.attackCd = attackIntervalFor();
-  const dmg = 45;
-  target.hp = Math.max(0, target.hp - dmg);
+  // Real Invoker auto-attacks aren't instant: there's a 0.4s attack point
+  // (wind-up) before the projectile is released, then it travels at 900
+  // units/sec to the target — both simulated here (updateAttackProjectiles)
+  // instead of applying damage the instant the swing starts.
+  attackProjectiles.push({ ox: player.x, oy: player.y, x: player.x, y: player.y,
+    target, windup: ATTACK_POINT, launched: false, dmg: 45 });
+}
+
+function resolveAttackHit(p){
+  const target = p.target;
+  target.hp = Math.max(0, target.hp - p.dmg);
   attackFx.push({ x: target.x, y: target.y, life: 0.25 });
   if(target.chilled > 0){
     log('❄️ Cold Snap explosion! Invoker attacks!');
@@ -1484,7 +2109,57 @@ function performAttack(target){
   checkProgress('attack');
 }
 
+function updateAttackProjectiles(dt){
+  for(let i = attackProjectiles.length-1; i>=0; i--){
+    const p = attackProjectiles[i];
+    if(!enemies.includes(p.target)){ attackProjectiles.splice(i,1); continue; }
+    if(p.windup > 0){ p.windup = Math.max(0, p.windup - dt); continue; }
+    if(!p.launched){
+      p.launched = true;
+      p.x = p.ox; p.y = p.oy;
+    }
+    // Homing: real Dota auto-attack projectiles track their target's current
+    // position every frame rather than flying in a fixed straight line from
+    // the instant they're released — re-aim toward the target each tick so a
+    // moving enemy can't simply walk out of the way of a projectile that's
+    // already in flight (a projectile only ever fails to connect if its
+    // target dies or leaves play, handled by the enemies.includes() check
+    // above, not because it "missed" a moving target).
+    const a = angleTo(p, p.target);
+    p.x += Math.cos(a) * ATTACK_PROJECTILE_SPEED * dt;
+    p.y += Math.sin(a) * ATTACK_PROJECTILE_SPEED * dt;
+    if(dist(p, p.target) < p.target.radius + 4){
+      resolveAttackHit(p);
+      attackProjectiles.splice(i,1);
+    }
+  }
+}
+
+// Forge Spirit ranged-attack projectiles — same homing behavior as
+// Invoker's own auto-attack projectiles (re-aims at the target's current
+// position every frame), just a separate array/log message since Forge
+// Spirits are a distinct attacking unit, not Invoker himself.
+function updateAllyProjectiles(dt){
+  for(let i = allyProjectiles.length-1; i>=0; i--){
+    const p = allyProjectiles[i];
+    if(!enemies.includes(p.target)){ allyProjectiles.splice(i,1); continue; }
+    const a = angleTo(p, p.target);
+    p.x += Math.cos(a) * ALLY_PROJECTILE_SPEED * dt;
+    p.y += Math.sin(a) * ALLY_PROJECTILE_SPEED * dt;
+    if(dist(p, p.target) < p.target.radius + 4){
+      p.target.hp = Math.max(0, p.target.hp - p.dmg);
+      attackFx.push({ x: p.target.x, y: p.target.y, life: 0.25 });
+      log('🔥 Forge Spirit attacks!');
+      allyProjectiles.splice(i,1);
+    }
+  }
+}
+
 function updateEnemy(en, dt){
+  // Disabled units (Tactical Training's "already-disabled/stunned" puzzles)
+  // never move regardless of state — real gameplay never sets this flag,
+  // so this only ever affects tactical-mode enemies.
+  if(en.disabled) return;
   if(en.chilled > 0) en.chilled -= dt;
   if(en.alacritied > 0) en.alacritied -= dt;
   if(en.wallSlow > 0) en.wallSlow -= dt;
@@ -1513,21 +2188,64 @@ function updateEnemy(en, dt){
       en.x += Math.cos(a) * speed * dt;
       en.y += Math.sin(a) * speed * dt;
     }
+  } else if(en.state === 'chase-player'){
+    // Tactical-only: a flanking/aggressive enemy closes in on the Invoker
+    // himself rather than fleeing from him.
+    const a = angleTo(en, player);
+    en.x += Math.cos(a) * speed * dt;
+    en.y += Math.sin(a) * speed * dt;
+  } else if(en.state === 'chase-ally'){
+    // Tactical-only: pursues a specific puzzle hero-teammate (tacticalAllies),
+    // used for "diving/chasing your support" scenarios.
+    const tgt = tacticalAllies[en.chaseAllyIndex];
+    if(tgt){
+      const a = angleTo(en, tgt);
+      en.x += Math.cos(a) * speed * dt;
+      en.y += Math.sin(a) * speed * dt;
+    }
   }
   en.x = clamp(en.x, UNIT_MARGIN, WORLD.w - UNIT_MARGIN);
   en.y = clamp(en.y, UNIT_MARGIN, WORLD.h - UNIT_MARGIN);
+}
+
+// Tactical-only: puzzle hero-teammates are a separate, lightweight layer
+// from the real allies[] array (which is Forge Spirit summons with their
+// own ranged-attack AI/expiry) — they don't fight or take damage in the
+// live playout, just move according to a simple scripted role so the scene
+// reacts believably once the puzzle goes live.
+function updateTacticalAllies(dt){
+  for(const a of tacticalAllies){
+    if(a.role === 'flee'){
+      let nearest = null, nd = Infinity;
+      for(const en of enemies){ const d = dist(a, en); if(d < nd){ nd = d; nearest = en; } }
+      if(nearest){
+        const ang = angleTo(nearest, a); // away from nearest enemy
+        a.x = clamp(a.x + Math.cos(ang) * a.speed * dt, UNIT_MARGIN, WORLD.w - UNIT_MARGIN);
+        a.y = clamp(a.y + Math.sin(ang) * a.speed * dt, UNIT_MARGIN, WORLD.h - UNIT_MARGIN);
+      }
+    }
+    // role === 'hold' (default): stands its ground, no movement.
+  }
 }
 
 function updateAllies(dt){
   for(let i = allies.length-1; i>=0; i--){
     const a = allies[i];
     a.life -= dt;
+    if(a.attackCd > 0) a.attackCd = Math.max(0, a.attackCd - dt);
     let nearest = null, nd = Infinity;
     for(const en of enemies){ const d = dist(a,en); if(d<nd){nd=d;nearest=en;} }
-    if(nearest && nd > 40){
-      const ang = angleTo(a, nearest);
-      a.x += Math.cos(ang)*a.speed*dt;
-      a.y += Math.sin(ang)*a.speed*dt;
+    if(nearest){
+      if(nd > a.attackRange){
+        // Ranged: close the distance only until in attack range, then hold
+        // position and fire — never walks all the way up into melee range.
+        const ang = angleTo(a, nearest);
+        a.x += Math.cos(ang)*a.speed*dt;
+        a.y += Math.sin(ang)*a.speed*dt;
+      } else if(a.attackCd <= 0){
+        a.attackCd = ALLY_ATTACK_INTERVAL;
+        allyProjectiles.push({ x:a.x, y:a.y, target:nearest, dmg:a.dmg });
+      }
     }
     if(a.life <= 0) allies.splice(i,1);
   }
@@ -1546,13 +2264,31 @@ function frame(now){
 }
 
 function update(dt){
+  // Tactical Training starts as a frozen decision-point snapshot — nothing
+  // moves/ticks down until the player takes a real action and it goes
+  // 'live' (see enterTacticalLive()); at that point it runs the exact same
+  // pipeline as every other mode below, plus its own teammate-ally movement
+  // and a hesitation timeout.
+  if(mode === 'tactical' && tacticalPhase === 'frozen') return;
   updatePlayer(dt);
   for(const en of enemies) updateEnemy(en, dt);
   updateAllies(dt);
   updateEffects(dt);
+  updateAttackProjectiles(dt);
+  updateAllyProjectiles(dt);
   for(let i = moveClicks.length-1; i>=0; i--){ moveClicks[i].life -= dt; if(moveClicks[i].life<=0) moveClicks.splice(i,1); }
   for(let i = attackFx.length-1; i>=0; i--){ attackFx[i].life -= dt; if(attackFx[i].life<=0) attackFx.splice(i,1); }
   updateCamera();
+
+  if(mode === 'tactical'){
+    updateTacticalAllies(dt);
+    if(!tacticalAnswered && performance.now() >= tacticalLiveDeadline){
+      gradeTacticalAction(findMatchingOption(currentTacticalPuzzle, { type:'wait' }), { type:'wait' });
+    }
+    updateHUD();
+    return;
+  }
+
   updatePositionGoal();
 
   if(scenario && scenario.active){
@@ -1583,11 +2319,16 @@ function updateHUD(){
     el.title = meta.name;
   });
 
-  document.getElementById('speedText').textContent = `Move Speed: ${Math.round(player.speed + player.orbLevels.w*4)}`;
+  // Displayed in real Dota movement-speed units (divide the internal px/sec
+  // value back out by PPU) so it reads as "280" like the in-game HUD, not a
+  // raw pixel rate.
+  document.getElementById('speedText').textContent = `Move Speed: ${Math.round((player.speed + player.orbLevels.w*4) / PPU)}`;
 
   if(scenario){
+    // Time Trial is a stopwatch (counting up from the moment the attempt
+    // started), not a countdown like the other combo modes.
     document.getElementById('timerText').textContent = scenario.active
-      ? (isFinite(scenario.timeLeft) ? Math.ceil(scenario.timeLeft)+'s' : '∞')
+      ? (mode === 'timetrial' ? ((performance.now() - ttStartTime) / 1000).toFixed(1) + 's' : (isFinite(scenario.timeLeft) ? Math.ceil(scenario.timeLeft)+'s' : '∞'))
       : '--';
   }
 }
@@ -1633,6 +2374,26 @@ function drawAttackFx(){
   }
 }
 
+function drawAttackProjectiles(){
+  // Only draw once the projectile is actually launched (post attack-point) —
+  // during the 0.4s wind-up nothing is visible yet, same as a real attack
+  // animation before the hit/release frame.
+  for(const p of attackProjectiles){
+    if(!p.launched) continue;
+    const s = worldToScreen(p.x, p.y);
+    ctx.fillStyle = '#bcd6ff';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function drawAllyProjectiles(){
+  for(const p of allyProjectiles){
+    const s = worldToScreen(p.x, p.y);
+    ctx.fillStyle = '#ffb066';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI*2); ctx.fill();
+  }
+}
+
 function drawPositionGoal(){
   if(!scenario || !scenario.active || !scenario.positionGoal || scenario.positionGoal.satisfied) return;
   const g = scenario.positionGoal;
@@ -1658,14 +2419,15 @@ function drawEffects(){
     } else if(ef.type === 'tornado' || ef.type === 'deafeningblast'){
       const s = worldToScreen(ef.x, ef.y);
       const meta = SPELLS[ef.spellKey];
-      // ef.halfWidth is a hit-tolerance corridor, not a visual size — draw it as a faint outline
-      // and render the actual projectile as a small solid dot, so it reads as a fast-moving
-      // skillshot instead of a giant opaque ball sitting on top of the player.
-      ctx.strokeStyle = meta.color; ctx.globalAlpha = 0.25; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.stroke();
+      // ef.halfWidth is the true, to-scale AoE radius (Tornado: constant 200;
+      // Deafening Blast: interpolated 175→225) — drawn as a real translucent
+      // filled circle rather than a shrunken outline, per the "same scale,
+      // no exaggeration" requirement.
+      ctx.fillStyle = meta.color; ctx.globalAlpha = 0.28;
+      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = meta.color;
-      ctx.beginPath(); ctx.arc(s.x, s.y, 10, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = meta.color; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(s.x, s.y, ef.halfWidth, 0, Math.PI*2); ctx.stroke();
       ctx.font = '16px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.fillText(meta.icon, s.x, s.y);
     } else if(ef.type === 'chaosmeteor'){
@@ -1720,6 +2482,50 @@ function drawAllies(){
   }
 }
 
+// Hero/enemy portrait sprites (sliced from a user-supplied composite image,
+// see assets/). Portraits are drawn LARGER than each unit's true collision
+// radius purely for visual legibility — HERO_ICON_SCALE only affects what
+// gets drawn here in drawUnit(); every actual collision/attack-range/spell-hit
+// check elsewhere in the file still uses u.radius directly and is completely
+// unaffected by this cosmetic enlargement.
+const HERO_ICON_SCALE = 1.7;
+const HERO_IMAGES = { player: new Image(), a: new Image(), b: new Image() };
+HERO_IMAGES.player.src = 'assets/hero_player.png';
+HERO_IMAGES.a.src = 'assets/hero_enemy_a.png';
+HERO_IMAGES.b.src = 'assets/hero_enemy_b.png';
+
+// Tactical Training only: a named-hero roster (4 per traditional Dota role —
+// Carry/Support/Offlane-Tank-Initiator/Mid) used so puzzle allies/enemies
+// can be a specific recognizable hero instead of a generic recolored
+// portrait, matched to whatever narrative role that unit is playing in a
+// given puzzle (e.g. a unit described as "your support" gets an actual
+// support hero like Crystal Maiden). Not used anywhere outside tactical
+// mode — the live-game's own enemies keep the existing a/b portrait
+// alternation untouched.
+const TAC_HEROES = {
+  juggernaut:       { name:'Juggernaut',       role:'Carry' },
+  phantom_assassin: { name:'Phantom Assassin', role:'Carry' },
+  drow_ranger:      { name:'Drow Ranger',       role:'Carry' },
+  sven:             { name:'Sven',              role:'Carry' },
+  crystal_maiden:   { name:'Crystal Maiden',    role:'Support' },
+  lion:             { name:'Lion',              role:'Support' },
+  witch_doctor:     { name:'Witch Doctor',      role:'Support' },
+  dazzle:           { name:'Dazzle',            role:'Support' },
+  axe:              { name:'Axe',               role:'Offlane/Initiator' },
+  centaur:          { name:'Centaur Warrunner', role:'Offlane/Initiator' },
+  tidehunter:       { name:'Tidehunter',        role:'Offlane/Initiator' },
+  mars:             { name:'Mars',              role:'Offlane/Initiator' },
+  lina:             { name:'Lina',              role:'Mid' },
+  puck:             { name:'Puck',              role:'Mid' },
+  queenofpain:      { name:'Queen of Pain',     role:'Mid' }
+};
+const TAC_HERO_IMAGES = {};
+Object.keys(TAC_HEROES).forEach(key => {
+  const img = new Image();
+  img.src = `assets/hero_${key}.png`;
+  TAC_HERO_IMAGES[key] = img;
+});
+
 function drawUnit(u, opts){
   const s = worldToScreen(u.x, u.y);
   ctx.save();
@@ -1729,23 +2535,42 @@ function drawUnit(u, opts){
   const liftOffset = (u.airborne && u.airborne.active)
     ? Math.sin(Math.PI * clamp(u.airborne.timer/u.airborne.duration,0,1)) * 42
     : 0;
+  const drawY = s.y - liftOffset;
+
+  // Cosmetic-only draw radius for the portrait art (see HERO_ICON_SCALE
+  // comment above). u.radius itself is never touched.
+  const iconR = u.radius * HERO_ICON_SCALE;
 
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
-  ctx.beginPath(); ctx.ellipse(s.x, s.y+2, u.radius*0.9, u.radius*0.4, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(s.x, s.y+2, iconR*0.9, iconR*0.4, 0, 0, Math.PI*2); ctx.fill();
 
-  const drawY = s.y - liftOffset;
-  ctx.fillStyle = opts.color;
-  ctx.beginPath(); ctx.arc(s.x, drawY, u.radius, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  const portrait = opts.portrait;
+  if(portrait && portrait.complete && portrait.naturalWidth){
+    ctx.drawImage(portrait, s.x-iconR, drawY-iconR, iconR*2, iconR*2);
+  } else {
+    // Fallback flat circle while the portrait image is still loading.
+    ctx.fillStyle = opts.color;
+    ctx.beginPath(); ctx.arc(s.x, drawY, iconR, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  // Subtle dashed reference ring at the TRUE collision radius — the bigger
+  // portrait art is purely cosmetic, so this keeps the real to-scale hitbox
+  // (the thing that actually drives range/AoE checks) visible underneath it.
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.arc(s.x, drawY, u.radius, 0, Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
 
   if(opts.facing !== undefined){
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(s.x, drawY);
-    ctx.lineTo(s.x + Math.cos(opts.facing)*(u.radius+14), drawY + Math.sin(opts.facing)*(u.radius+14));
+    ctx.lineTo(s.x + Math.cos(opts.facing)*(iconR+14), drawY + Math.sin(opts.facing)*(iconR+14));
     ctx.stroke();
     // arrow head
-    const ax = s.x + Math.cos(opts.facing)*(u.radius+14), ay = drawY + Math.sin(opts.facing)*(u.radius+14);
+    const ax = s.x + Math.cos(opts.facing)*(iconR+14), ay = drawY + Math.sin(opts.facing)*(iconR+14);
     ctx.beginPath();
     ctx.moveTo(ax,ay);
     ctx.lineTo(ax - Math.cos(opts.facing-0.4)*8, ay - Math.sin(opts.facing-0.4)*8);
@@ -1756,22 +2581,26 @@ function drawUnit(u, opts){
   // hp bar
   if(opts.hpMax){
     const w = 32, h = 4;
-    ctx.fillStyle = '#222'; ctx.fillRect(s.x-w/2, drawY-u.radius-12, w, h);
+    ctx.fillStyle = '#222'; ctx.fillRect(s.x-w/2, drawY-iconR-12, w, h);
     ctx.fillStyle = opts.hpColor || '#4caf6b';
-    ctx.fillRect(s.x-w/2, drawY-u.radius-12, w*clamp(u.hp/opts.hpMax,0,1), h);
+    ctx.fillRect(s.x-w/2, drawY-iconR-12, w*clamp(u.hp/opts.hpMax,0,1), h);
   }
 
   if(opts.label){
     ctx.fillStyle = '#fff'; ctx.font = '11px sans-serif'; ctx.textAlign='center';
-    ctx.fillText(opts.label, s.x, drawY - u.radius - 16);
+    ctx.fillText(opts.label, s.x, drawY - iconR - 16);
   }
 
   // status icons
   let statusX = s.x - 18;
-  const statusY = drawY + u.radius + 14;
+  const statusY = drawY + iconR + 14;
   if(u.chilled > 0){ ctx.font='12px sans-serif'; ctx.fillText('❄️', statusX, statusY); statusX += 16; }
   if(u.alacritied > 0){ ctx.font='12px sans-serif'; ctx.fillText('✨', statusX, statusY); statusX += 16; }
-  if(u.airborne && u.airborne.active){ ctx.font='12px sans-serif'; ctx.fillText('🌪️', statusX, statusY); }
+  if(u.airborne && u.airborne.active){ ctx.font='12px sans-serif'; ctx.fillText('🌪️', statusX, statusY); statusX += 16; }
+  // Generic "disabled" marker (stunned/rooted/silenced) — used by Tactical
+  // Training puzzle snapshots, which don't model a specific disable source,
+  // just the fact that a hero currently can't act.
+  if(u.disabled){ ctx.font='12px sans-serif'; ctx.fillText('😵', statusX, statusY); }
 
   ctx.restore();
 }
@@ -1780,9 +2609,44 @@ function drawUnit(u, opts){
 // the player's own hero model on the canvas — like the small glowing orbs
 // that circle Invoker in the real game — instead of sitting in a separate
 // HUD panel next to the Q/W/E buttons.
-const ORB_COLORS = { q:'#3aa0e0', w:'#8e5fe0', e:'#e8c94a' };
+const ORB_PALETTE = {
+  q: { main:'#28CFFF', bright:'#B9F6FF', dark:'#0877B9' },
+  w: { main:'#D83CFF', bright:'#FFB5FF', dark:'#74139B' },
+  e: { main:'#FFAA20', bright:'#FFF09A', dark:'#D7420A' },
+};
+// Renders a single orb as a glowing sphere (bright hot core -> main color ->
+// darker rim) with a soft bloom (shadowBlur) and a couple of tiny drifting
+// sparkle particles, instead of a flat filled circle.
+function drawGlowOrb(cx, cy, r, palette, t){
+  ctx.save();
+  ctx.shadowColor = palette.main;
+  ctx.shadowBlur = r * 2.2;
+  const grad = ctx.createRadialGradient(cx - r*0.35, cy - r*0.35, r*0.12, cx, cy, r);
+  grad.addColorStop(0, palette.bright);
+  grad.addColorStop(0.55, palette.main);
+  grad.addColorStop(1, palette.dark);
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = palette.dark;
+  ctx.globalAlpha = 0.6; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // subtle orbiting sparkle particles
+  for(let i=0;i<2;i++){
+    const pa = t*2.4 + i*Math.PI;
+    const pr = r*0.85;
+    const px = cx + Math.cos(pa)*pr, py = cy + Math.sin(pa)*pr*0.6;
+    ctx.fillStyle = palette.bright;
+    ctx.globalAlpha = 0.55 + 0.35*Math.sin(pa*1.7);
+    ctx.beginPath(); ctx.arc(px, py, Math.max(1, r*0.14), 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
 function drawOrbRing(u, queue){
-  const ringR = u.radius + 16;
+  const ringR = u.radius * HERO_ICON_SCALE + 20;
   const spin = performance.now()/900;
   for(let i=0;i<3;i++){
     const letter = queue[queue.length-3+i];
@@ -1793,11 +2657,14 @@ function drawOrbRing(u, queue){
     const ox = u.x + Math.cos(angle)*ringR;
     const oy = u.y + Math.sin(angle)*ringR*0.5;
     const s = worldToScreen(ox, oy);
-    ctx.beginPath();
-    ctx.fillStyle = letter ? ORB_COLORS[letter] : 'rgba(255,255,255,0.15)';
-    ctx.arc(s.x, s.y, letter ? 5 : 3.5, 0, Math.PI*2);
-    ctx.fill();
-    if(letter){ ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
+    if(letter){
+      drawGlowOrb(s.x, s.y, 7, ORB_PALETTE[letter], spin + i);
+    } else {
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.arc(s.x, s.y, 3.5, 0, Math.PI*2);
+      ctx.fill();
+    }
   }
 }
 
@@ -1827,14 +2694,51 @@ function drawTargeting(){
     ctx.setLineDash([]);
     ctx.strokeStyle = meta.color;
     ctx.beginPath(); ctx.arc(s.x, s.y, meta.radius, 0, Math.PI*2); ctx.stroke();
+    if(targetingSpell === 'sunstrike'){
+      // Sun Strike has a 1.7s delay before impact — show a "lead" ghost at
+      // each enemy's predicted position after that delay, based on the same
+      // movement rules updateEnemy() itself uses (idle = stays put, flee =
+      // moves away from the player, patrol = moves toward its current
+      // waypoint), so you can practice aiming ahead of a moving target
+      // instead of where they are right now.
+      for(const en of enemies){
+        let dx = 0, dy = 0;
+        const moving = en.stunTimer <= 0 && !en.airborne.active;
+        if(moving && en.state === 'flee'){
+          const a = angleTo(player, en);
+          dx = Math.cos(a); dy = Math.sin(a);
+        } else if(moving && en.state === 'patrol'){
+          const tgt = en._toB ? en.patrolB : en.patrolA;
+          const a = angleTo(en, tgt);
+          dx = Math.cos(a); dy = Math.sin(a);
+        }
+        const speed = moving ? en.speed * (en.wallSlow > 0 ? 0.35 : 1) : 0;
+        const lead = { x: en.x + dx*speed*meta.delay, y: en.y + dy*speed*meta.delay };
+        const es = worldToScreen(en.x, en.y);
+        const ls = worldToScreen(lead.x, lead.y);
+        ctx.setLineDash([3,3]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.beginPath(); ctx.moveTo(es.x, es.y); ctx.lineTo(ls.x, ls.y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = 'rgba(242,163,58,0.85)';
+        ctx.beginPath(); ctx.arc(ls.x, ls.y, 6, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(ls.x, ls.y, 6, 0, Math.PI*2); ctx.stroke();
+      }
+    }
   } else {
     ctx.beginPath(); ctx.moveTo(ps.x,ps.y); ctx.lineTo(s.x,s.y); ctx.stroke();
     ctx.setLineDash([]);
-    // Preview the hit-tolerance corridor as a faint ring (not a solid filled blob) plus a small
-    // dot marking the exact aim point, matching the in-flight projectile's rendering.
-    ctx.strokeStyle = meta.color; ctx.globalAlpha = 0.25; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(s.x, s.y, meta.halfWidth || 8, 0, Math.PI*2); ctx.stroke();
+    // Preview the true, to-scale AoE radius as a translucent filled circle
+    // (matching the in-flight projectile's rendering) plus a small dot
+    // marking the exact aim point.
+    const previewR = meta.halfWidth !== undefined ? meta.halfWidth
+      : (meta.endRadius !== undefined ? meta.endRadius : 8);
+    ctx.fillStyle = meta.color; ctx.globalAlpha = 0.22;
+    ctx.beginPath(); ctx.arc(s.x, s.y, previewR, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
+    ctx.strokeStyle = meta.color; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, previewR, 0, Math.PI*2); ctx.stroke();
     ctx.fillStyle = meta.color;
     ctx.beginPath(); ctx.arc(s.x, s.y, 6, 0, Math.PI*2); ctx.fill();
   }
@@ -1842,21 +2746,1114 @@ function drawTargeting(){
 }
 
 function render(){
+  if(mode === 'tactical' && tacticalPhase === 'frozen'){ renderTacticalScene(); return; }
   drawGrid();
   drawPositionGoal();
   drawMoveClicks();
   drawAttackFx();
+  drawAttackProjectiles();
+  drawAllyProjectiles();
   drawEffects();
   drawAllies();
 
   for(const en of enemies){
-    drawUnit(en, { color:'#c0392b', hpMax:en.hpMax, label:'Enemy Hero' });
+    const portrait = (mode === 'tactical' && en.hero) ? TAC_HERO_IMAGES[en.hero] : HERO_IMAGES[en.portraitKey];
+    drawUnit(en, { color:'#c0392b', hpMax:en.hpMax, hpColor: mode==='tactical' ? tacHpColor(en) : undefined, label: en.label || 'Enemy Hero', portrait });
   }
+  if(mode === 'tactical') drawTacticalAllies();
   drawUnit(player, { color: player.invisible ? 'rgba(90,140,220,0.4)':'#2f6fd6', alpha: player.invisible?0.55:1,
-    facing: player.facing, label:'Invoker' });
+    facing: player.facing, label:'Invoker', portrait: HERO_IMAGES.player });
   drawOrbRing(player, player.orbQueue);
 
   drawTargeting();
+}
+
+// Tactical-only: puzzle hero-teammates aren't part of the real allies[]
+// (Forge Spirit) array, so they need their own draw pass once the puzzle
+// goes live — same green-circle-fallback rendering as the frozen snapshot.
+function drawTacticalAllies(){
+  for(const u of tacticalAllies){
+    drawUnit(u, { color:'#4caf6b', hpMax:u.hpMax, hpColor: tacHpColor(u), label: u.label || 'Ally Hero', portrait: TAC_HERO_IMAGES[u.hero], facing: u.facing });
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Tactical Training — teamfight decision puzzles ("a chess puzzle for
+   Dota 2"). Unlike every other mode above, this is NOT a running
+   simulation: each puzzle is a hand-authored, frozen battlefield snapshot
+   (positions/HP/mana/cooldowns already decided in the data below), and the
+   player picks the single best next action from a short multiple-choice
+   list. There's no free-form casting/targeting here on purpose — the goal
+   is training the SEE -> INTERPRET -> PRIORITIZE -> ACT decision loop
+   itself (and specifically discouraging "I started a combo, therefore I
+   must finish it" autopilot), not combo-execution mechanics — that's what
+   Combo Trainer / Skill Tap / Endless Rotation already train.
+--------------------------------------------------------------------- */
+
+// 5-tier quality scale instead of binary right/wrong — more than one
+// action can be reasonable in a real teamfight, so "acceptable" still
+// earns real points, while "questionable"/"bad" cost you the streak.
+const TAC_QUALITY = {
+  excellent:    { label:'Excellent decision',    points:100 },
+  good:         { label:'Good decision',         points:80  },
+  acceptable:   { label:'Acceptable decision',   points:55  },
+  questionable: { label:'Questionable decision', points:30  },
+  bad:          { label:'Bad decision',          points:5   }
+};
+
+// Reading order for the cooldown/spellbook readout (not orb-combo order).
+const TAC_SPELLBOOK = ['ghostwalk','coldsnap','tornado','emp','sunstrike','chaosmeteor','deafeningblast','forgespirit','icewall','alacrity'];
+
+// Every puzzle option is tagged with one or more of these so performance
+// can be tracked per decision-making skill, not just an overall score.
+const TAC_CATEGORIES = ['Fight Awareness','Positioning','Target Selection','Spell Selection','Cooldown Management','Ally Protection','Kill Recognition','Disengagement','Restraint'];
+
+// Fills in every spell as "ready" (0) except the ones a puzzle explicitly
+// overrides, so puzzle data only has to mention the cooldowns that matter.
+function tacCooldowns(overrides){
+  const base = {};
+  TAC_SPELLBOOK.forEach(k => base[k] = 0);
+  return Object.assign(base, overrides || {});
+}
+
+const TACTICAL_PUZZLES = [
+  { id:'init-01', category:'Initiation', difficulty:1,
+    title:'A Clean Opening',
+    intro:'Both enemy heroes are standing close together near their own tier-one tower, neither one currently engaged with your team.',
+    invoker:{ x:700, y:500, hp:640, hpMax:700, mana:560, manaMax:620, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:550,y:520,hp:580,hpMax:580,facing:0, hero:'crystal_maiden', label:'Crystal Maiden' }, { x:520,y:460,hp:600,hpMax:600,facing:0, hero:'juggernaut', label:'Juggernaut' } ],
+    enemies:[ { x:950,y:430,hp:820,hpMax:820,facing:Math.PI, hero:'phantom_assassin', label:'Phantom Assassin' }, { x:1000,y:470,hp:760,hpMax:760,facing:Math.PI, hero:'lion', label:'Lion' } ],
+    threats:[],
+    options:[
+      { label:'Cast Tornado through both enemy heroes to open the fight.', quality:'excellent', categories:['Fight Awareness','Spell Selection'], feedback:'Excellent decision. Both enemies are standing still and close together with nothing threatening your team — Tornado hits both, and every other tool (EMP, Chaos Meteor, Deafening Blast) is still available to follow up while they\'re airborne.', action:{ cast:'tornado', at:{ point:{x:975,y:450} } } },
+      { label:'Cast EMP on the same spot to drain their mana first.', quality:'good', categories:['Spell Selection'], feedback:'Good alternative — EMP still hits both heroes for a strong mana burn, but it doesn\'t lock them down, so they can walk out before your team capitalizes on it. Tornado\'s guaranteed disable is the stronger opener here.', action:{ cast:'emp', at:{ point:{x:975,y:450} } } },
+      { label:'Walk up and attack the closer enemy hero.', quality:'questionable', categories:['Fight Awareness','Target Selection'], feedback:'Questionable. Attacking alone before any control lands just tells both enemies to turn and fight (or focus) you — you have two AoE disables ready against a grouped target, there\'s no reason to open with a single auto attack.', action:{ attack:{team:'enemies', i:0} } },
+      { label:'Hold every spell and reposition instead — there is no fight yet.', quality:'bad', categories:['Restraint'], feedback:'Bad decision here — restraint is valuable when nothing is actually available, but two clustered, unaware, full-cooldown enemies is exactly the opportunity holding a spell is meant to wait for.', action:{ wait:true } }
+    ]
+  },
+  { id:'protect-01', category:'Ally Protection', difficulty:1,
+    title:'Diving Your Support',
+    intro:'An enemy hero has walked deep past the fighting to reach your support, who is standing alone near your tower at half health. The rest of the fight is happening elsewhere, out of view.',
+    invoker:{ x:500, y:300, hp:680, hpMax:700, mana:500, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:300,y:250,hp:260,hpMax:620,facing:Math.PI, hero:'crystal_maiden', label:'Crystal Maiden (Support)' } ],
+    enemies:[ { x:230,y:230,hp:700,hpMax:700,facing:Math.PI*0.9, state:'chase-ally', chaseAllyIndex:0, hero:'axe', label:'Axe (diving)' } ],
+    threats:[ { from:{team:'enemies',i:0}, to:{team:'allies',i:0} } ],
+    options:[
+      { label:'Cast Cold Snap on the diving enemy hero to lock them down.', quality:'excellent', categories:['Ally Protection','Target Selection'], feedback:'Excellent — Cold Snap marks the diver and every hit (including your support\'s own attacks) re-triggers its stun, turning the gank around instantly and buying your support all the time they need.', action:{ cast:'coldsnap', at:{team:'enemies', i:0} } },
+      { label:'Cast Tornado on the diving enemy hero.', quality:'good', categories:['Ally Protection'], feedback:'Good — Tornado also removes the immediate threat and buys time, though it\'s a heavier control spell than this single, isolated target needs, and it\'s now unavailable for the real teamfight happening elsewhere.', action:{ cast:'tornado', at:{team:'enemies', i:0} } },
+      { label:'Ignore it and continue toward the ongoing teamfight.', quality:'bad', categories:['Ally Protection','Fight Awareness'], feedback:'Bad decision. A support alone at half HP against a diving hero is at real risk of dying in the next couple of seconds — that\'s a bigger, more immediate swing than anything you can add to a fight already in progress elsewhere.', action:{ move:true } },
+      { label:'Attack the diving enemy hero yourself.', quality:'acceptable', categories:['Ally Protection'], feedback:'Acceptable — your attack adds pressure and threatens the diver, but without a disable they can simply keep attacking your support back. A control spell resolves this far more safely.', action:{ attack:{team:'enemies', i:0} } }
+    ]
+  },
+  { id:'retreat-enemy-01', category:'Enemy Retreat', difficulty:1,
+    title:'They\'re Pulling Out',
+    intro:'Two enemy heroes that were just trading hits with your team have turned and are moving back toward their own jungle, putting distance between themselves and your group.',
+    invoker:{ x:700, y:500, hp:600, hpMax:700, mana:480, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:600,y:520,hp:520,hpMax:600,facing:Math.PI*1.5, hero:'sven', label:'Sven' } ],
+    enemies:[ { x:1050,y:380,hp:340,hpMax:800,facing:Math.PI*1.2, state:'flee', hero:'witch_doctor', label:'Witch Doctor' }, { x:1120,y:340,hp:610,hpMax:760,facing:Math.PI*1.2, state:'flee', hero:'drow_ranger', label:'Drow Ranger' } ],
+    threats:[],
+    options:[
+      { label:'Cast Tornado ahead of their retreat path to cut them off.', quality:'excellent', categories:['Fight Awareness','Kill Recognition'], feedback:'Excellent — the fight has shifted from "trade damage" to "convert the retreat into a kill." Tornado ahead of their path stops the low-HP hero from walking away and re-opens the fight on your terms.', action:{ cast:'tornado', at:{team:'enemies', i:0} } },
+      { label:'Cast Sun Strike on their current position.', quality:'good', categories:['Kill Recognition'], feedback:'Good — Sun Strike still threatens real damage on a low-HP retreating target, though its cast delay gives them time to keep moving out of the blast if they notice it coming.', action:{ cast:'sunstrike', at:{team:'enemies', i:0} } },
+      { label:'Keep attacking from where you are.', quality:'questionable', categories:['Fight Awareness','Target Selection'], feedback:'Questionable — they\'re already out of your attack range and moving away, so continuing to "attack" accomplishes nothing; ranged control or repositioning is needed to actually catch them.', action:{ attack:{team:'enemies', i:0} } },
+      { label:'Hold your spells in case they turn back around.', quality:'bad', categories:['Fight Awareness','Restraint'], feedback:'Bad decision — a retreating, low-HP enemy hero is a disappearing kill opportunity, not a reason for caution. Waiting here just lets both of them walk away safely.', action:{ wait:true } }
+    ]
+  },
+  { id:'retreat-ally-01', category:'Ally Retreat', difficulty:1,
+    title:'Your Team Is Falling Back',
+    intro:'The fight went poorly — two of your allies are already retreating with an enemy hero in pursuit. You are standing between them and the enemy.',
+    invoker:{ x:700, y:500, hp:520, hpMax:700, mana:430, manaMax:600, facing:Math.PI },
+    cooldowns: tacCooldowns({ sunstrike:26 }),
+    allies:[ { x:500,y:520,hp:180,hpMax:640,facing:Math.PI, role:'flee', hero:'dazzle', label:'Dazzle' }, { x:460,y:560,hp:260,hpMax:600,facing:Math.PI, role:'flee', hero:'sven', label:'Sven' } ],
+    enemies:[ { x:950,y:470,hp:700,hpMax:760,facing:Math.PI, state:'chase-ally', chaseAllyIndex:0, hero:'centaur', label:'Centaur Warrunner' } ],
+    threats:[ { from:{team:'enemies',i:0}, to:{team:'allies',i:0} } ],
+    options:[
+      { label:'Cast Ice Wall behind you to block the pursuing enemy\'s path.', quality:'excellent', categories:['Disengagement','Ally Protection'], feedback:'Excellent — your team is already losing this fight; Ice Wall cuts off the chase completely and turns a potential kill for the enemy into a clean disengage for your whole group.', action:{ cast:'icewall' } },
+      { label:'Cast Tornado on the pursuing enemy hero to buy time.', quality:'good', categories:['Ally Protection','Disengagement'], feedback:'Good alternative — it removes the immediate chaser just as effectively, though it\'s shorter and more mana-intensive than a wall that fully seals the path behind your retreating allies.', action:{ cast:'tornado', at:{team:'enemies', i:0} } },
+      { label:'Cast Tornado offensively and try to turn the fight around.', quality:'bad', categories:['Fight Awareness','Disengagement'], feedback:'Bad decision — your team is already losing and two allies are critically low. Trying to re-initiate now risks turning a survivable retreat into a wipe instead of just letting the fight end.' },
+      { label:'Ghost Walk away and let your allies fend for themselves.', quality:'questionable', categories:['Disengagement','Ally Protection'], feedback:'Questionable — you\'d survive, but leaving two low-HP allies to be caught alone is a bad trade when a single spell could have saved the whole group instead of just yourself.', action:{ cast:'ghostwalk' } }
+    ]
+  },
+  { id:'kill-01', category:'Kill Opportunity', difficulty:1,
+    title:'One Is About To Escape',
+    intro:'An enemy hero is fleeing alone at critically low health, well ahead of the rest of the fight. No other enemy heroes are nearby.',
+    invoker:{ x:600, y:450, hp:660, hpMax:700, mana:520, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[],
+    enemies:[ { x:1150,y:430,hp:70,hpMax:760,facing:0, state:'flee', hero:'queenofpain', label:'Queen of Pain' } ],
+    threats:[],
+    options:[
+      { label:'Cast Sun Strike on their current position to finish them.', quality:'excellent', categories:['Kill Recognition','Target Selection'], feedback:'Excellent — at this HP, Sun Strike\'s damage is a guaranteed kill if it lands, and a lone fleeing hero moving in a straight line is exactly the kind of target its delay can still catch.', action:{ cast:'sunstrike', at:{team:'enemies', i:0} } },
+      { label:'Cast Chaos Meteor along their escape path.', quality:'good', categories:['Kill Recognition'], feedback:'Good — the meteor\'s damage-over-time will very likely finish a target this low, though its travel/landing delay and rolling path make it slightly less reliable than a direct Sun Strike on a single fleeing target.', action:{ cast:'chaosmeteor', at:{team:'enemies', i:0} } },
+      { label:'Cast EMP on the empty area behind you.', quality:'bad', categories:['Spell Selection','Target Selection'], feedback:'Bad decision — EMP has no value here; there\'s only one target and they\'re nowhere near your position, so this wastes a long-cooldown spell for zero effect while the actual kill escapes.', action:{ cast:'emp', at:{ point:{x:500,y:450} } } },
+      { label:'Let them go and reposition with your team.', quality:'bad', categories:['Kill Recognition'], feedback:'Bad decision — a hero this low is a nearly free kill. Passing it up hands the enemy team a full recovery and costs your team a clear numbers advantage for the next fight.', action:{ move:true } }
+    ]
+  },
+  { id:'cluster-01', category:'Clustered Enemies', difficulty:1,
+    title:'All Three, Right There',
+    intro:'All three visible enemy heroes are standing shoulder-to-shoulder around a shared objective, none of them currently paying attention to your position.',
+    invoker:{ x:500, y:450, hp:700, hpMax:700, mana:600, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:400,y:470,hp:600,hpMax:600,facing:0, hero:'phantom_assassin', label:'Phantom Assassin' }, { x:380,y:420,hp:580,hpMax:640,facing:0, hero:'witch_doctor', label:'Witch Doctor' } ],
+    enemies:[ { x:900,y:430,hp:720,hpMax:760, hero:'tidehunter', label:'Tidehunter' }, { x:950,y:460,hp:640,hpMax:700, hero:'lina', label:'Lina' }, { x:930,y:490,hp:800,hpMax:820, hero:'lion', label:'Lion' } ],
+    threats:[],
+    options:[
+      { label:'Cast EMP directly on the group to burn all three heroes\' mana.', quality:'excellent', categories:['Spell Selection','Fight Awareness'], feedback:'Excellent — EMP\'s radius is enormous and all three heroes are stacked well within it; hitting three heroes with a single mana burn is about as high-value as the spell gets, and it primes them for a follow-up Tornado/Meteor from your team.', action:{ cast:'emp', at:{ point:{x:927,y:460} } } },
+      { label:'Cast Chaos Meteor through the group.', quality:'good', categories:['Spell Selection'], feedback:'Good — Meteor\'s rolling damage will tag all three as it passes through, though it deals damage over time rather than instantly locking the group down the way EMP or Tornado can.', action:{ cast:'chaosmeteor', at:{ point:{x:927,y:460} } } },
+      { label:'Attack the nearest of the three.', quality:'questionable', categories:['Target Selection','Fight Awareness'], feedback:'Questionable — three grouped, unaware enemies is a rare high-value AoE opportunity; spending it on a single auto attack (which also reveals you) wastes almost all of the value available here.', action:{ attack:{team:'enemies', i:0} } },
+      { label:'Hold everything — three enemies is too risky to engage.', quality:'bad', categories:['Restraint','Fight Awareness'], feedback:'Bad decision — they\'re unaware and clustered, which is the safe way to engage a group: your team lands the first, biggest hit before they can react. Passing this up is overly cautious.', action:{ wait:true } }
+    ]
+  },
+  { id:'controlled-01', category:'Already-Controlled Enemy', difficulty:2,
+    title:'They\'re Already Losing This One',
+    intro:'One enemy hero is being attacked by two of your allies simultaneously and is clearly disabled. A second, full-health enemy hero stands untouched some distance away, not yet involved.',
+    invoker:{ x:640, y:470, hp:650, hpMax:700, mana:540, manaMax:620, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:400,y:560,hp:560,hpMax:600,facing:0.4, hero:'sven', label:'Sven' }, { x:430,y:400,hp:600,hpMax:640,facing:-0.4, hero:'crystal_maiden', label:'Crystal Maiden' } ],
+    enemies:[ { x:520,y:480,hp:180,hpMax:760,disabled:true, hero:'puck', label:'Puck (disabled)' }, { x:1100,y:400,hp:820,hpMax:820,facing:Math.PI, hero:'mars', label:'Mars' } ],
+    threats:[ { from:{team:'allies',i:0}, to:{team:'enemies',i:0} }, { from:{team:'allies',i:1}, to:{team:'enemies',i:0} } ],
+    options:[
+      { label:'Cast Tornado on the second, uninvolved enemy hero to open a new front.', quality:'excellent', categories:['Spell Selection','Target Selection'], feedback:'Excellent — the disabled enemy is already dying to your allies without help; spending Tornado on the untouched second hero creates an additional advantage instead of overkilling a target that\'s already handled.', action:{ cast:'tornado', at:{team:'enemies', i:1} } },
+      { label:'Attack the already-disabled enemy hero to help finish it faster.', quality:'good', categories:['Target Selection'], feedback:'Good — it does speed up a kill that\'s already happening, but your allies likely have it covered, so the marginal value here is lower than opening a new advantage elsewhere.', action:{ attack:{team:'enemies', i:0} } },
+      { label:'Cast Tornado on the already-disabled enemy hero for extra control.', quality:'bad', categories:['Spell Selection','Fight Awareness'], feedback:'Bad Tornado. The target is already disabled and being killed — Tornado would actually make them briefly invulnerable while airborne, interrupting your allies\' attacks and delaying the kill instead of helping it.', action:{ cast:'tornado', at:{team:'enemies', i:0} } },
+      { label:'Hold all spells and just watch the kill happen.', quality:'questionable', categories:['Restraint','Fight Awareness'], feedback:'Questionable — the kill is likely secure without you, but a second, uninvolved full-health enemy is standing right there unengaged; there\'s real value available that simply waiting passes up.', action:{ wait:true } }
+    ]
+  },
+  { id:'backline-01', category:'Positioning', difficulty:2,
+    title:'Something Slipped Past',
+    intro:'While two enemy heroes are grouped up at range, a third has circled around and is now closing in fast on your position from the side.',
+    invoker:{ x:500, y:600, hp:560, hpMax:700, mana:480, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:520,y:300,hp:600,hpMax:600,facing:Math.PI, hero:'witch_doctor', label:'Witch Doctor' } ],
+    enemies:[ { x:900,y:280,hp:700,hpMax:760, hero:'lina', label:'Lina' }, { x:950,y:320,hp:680,hpMax:740, hero:'drow_ranger', label:'Drow Ranger' }, { x:460,y:560,hp:640,hpMax:700,facing:Math.PI*1.25, state:'chase-player', hero:'mars', label:'Mars (flanking)' } ],
+    threats:[ { from:{team:'enemies',i:2}, to:{team:'invoker'} } ],
+    options:[
+      { label:'Cast Cold Snap on the flanking enemy right next to you.', quality:'excellent', categories:['Fight Awareness','Ally Protection'], feedback:'Excellent — the plan was to engage the distant pair, but the fight already changed: a hero is right on top of you. Dealing with the immediate threat first keeps you alive to use your other spells at all.', action:{ cast:'coldsnap', at:{team:'enemies', i:2} } },
+      { label:'Attack the flanking enemy directly.', quality:'good', categories:['Fight Awareness'], feedback:'Good — it addresses the real threat, though without a disable the flanker can still fight back freely; a control spell handles it far more safely.', action:{ attack:{team:'enemies', i:2} } },
+      { label:'Cast Tornado on the two distant grouped enemies as originally planned.', quality:'bad', categories:['Fight Awareness','Positioning'], feedback:'Bad decision — this is the classic "finish the planned combo" mistake. A hero has already reached you personally; ignoring that immediate danger to execute on an unrelated pair risks taking heavy damage, or worse, while your Tornado sails off elsewhere.', action:{ cast:'tornado', at:{ point:{x:925,y:300} } } },
+      { label:'Retreat away from all three enemies without casting anything.', quality:'acceptable', categories:['Positioning','Disengagement'], feedback:'Acceptable — repositioning away from the flanker is a safe, defensible reaction, though a well-aimed control spell could have neutralized the immediate threat instead of just delaying it.', action:{ move:true } }
+    ]
+  },
+  { id:'cooldown-01', category:'Cooldown Management', difficulty:2,
+    title:'The Big Spells Are Down',
+    intro:'Tornado, EMP, and Chaos Meteor are all still recovering from recent use. A single enemy hero is standing at medium range, at moderate health.',
+    invoker:{ x:600, y:450, hp:640, hpMax:700, mana:360, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({ tornado:24, emp:31, chaosmeteor:18 }),
+    allies:[ { x:520,y:470,hp:580,hpMax:600, hero:'juggernaut', label:'Juggernaut' } ],
+    enemies:[ { x:950,y:430,hp:520,hpMax:760, hero:'queenofpain', label:'Queen of Pain' } ],
+    threats:[],
+    options:[
+      { label:'Cast Cold Snap on the enemy hero, then Alacrity yourself and attack.', quality:'excellent', categories:['Cooldown Management','Spell Selection'], feedback:'Excellent — with the big AoE combo down, Cold Snap plus Alacrity is exactly the right toolkit to convert what\'s actually available into real sustained damage, instead of waiting on cooldowns that aren\'t coming back soon.', action:{ cast:'coldsnap', at:{team:'enemies', i:0} } },
+      { label:'Cast Deafening Blast to knock them back and stun them.', quality:'good', categories:['Cooldown Management'], feedback:'Good — Deafening Blast is available and still provides real control and damage, though without a follow-up like Cold Snap\'s stacking stun it won\'t sustain pressure as long as the attack-focused plan would.', action:{ cast:'deafeningblast', at:{team:'enemies', i:0} } },
+      { label:'Wait for Tornado to come off cooldown before doing anything.', quality:'bad', categories:['Cooldown Management','Restraint'], feedback:'Bad decision — Tornado is over 20 seconds away, and there\'s a real target in range right now with several other useful spells fully available. Waiting on one specific spell wastes the opportunity in front of you.', action:{ wait:true } },
+      { label:'Attack the enemy hero with no spell support.', quality:'acceptable', categories:['Cooldown Management'], feedback:'Acceptable — plain attacks still do something, but Cold Snap is up and would make every attack re-trigger a stun, meaningfully more effective for basically the same action.', action:{ attack:{team:'enemies', i:0} } }
+    ]
+  },
+  { id:'positioning-01', category:'Positioning', difficulty:2,
+    title:'Good Spells, Bad Spot',
+    intro:'Every major spell is fully available, but you are standing alone at the edge of the map, well outside your team\'s vision, with the nearest ally far behind you.',
+    invoker:{ x:1300, y:200, hp:680, hpMax:700, mana:600, manaMax:600, facing:Math.PI },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:500,y:650,hp:600,hpMax:600, hero:'dazzle', label:'Dazzle' } ],
+    enemies:[ { x:1150,y:250,hp:700,hpMax:760,facing:Math.PI*1.3, hero:'axe', label:'Axe' }, { x:1200,y:300,hp:640,hpMax:720,facing:Math.PI*1.3, hero:'lina', label:'Lina' } ],
+    threats:[],
+    options:[
+      { label:'Reposition back toward your team before doing anything else.', quality:'excellent', categories:['Positioning','Fight Awareness'], feedback:'Excellent — having every spell ready doesn\'t matter if you get caught and killed alone first. Two enemy heroes are close by with no backup of your own nearby; repositioning first preserves both you and your full toolkit for a fight you can actually win.', action:{ move:true } },
+      { label:'Cast Tornado on the two nearby enemies from here.', quality:'bad', categories:['Positioning','Spell Selection'], feedback:'Bad decision — Tornado would tag both, but you\'re alone and far from support; even a successful cast just draws attention to an isolated, unsupported hero with no one around to capitalize on it or protect you if it goes wrong.', action:{ cast:'tornado', at:{ point:{x:1175,y:275} } } },
+      { label:'Cast Ghost Walk and continue scouting alone.', quality:'questionable', categories:['Positioning'], feedback:'Questionable — Ghost Walk buys some safety, but continuing to explore alone deep in a dangerous area still risks getting caught eventually; falling back toward your team resolves the actual problem instead of just delaying it.', action:{ cast:'ghostwalk' } },
+      { label:'Attack the nearer enemy hero to start a fight.', quality:'bad', categories:['Positioning','Fight Awareness'], feedback:'Bad decision — starting a fight 1-versus-2 while isolated from your own team is a losing engagement before it even begins, regardless of how many spells you have ready.', action:{ attack:{team:'enemies', i:0} } }
+    ]
+  },
+  { id:'restraint-01', category:'Restraint', difficulty:2,
+    title:'Nothing Is Happening Yet',
+    intro:'Both enemy heroes are far across the map, fully healthy, and not moving toward your team. Your own team is grouped up safely, and every spell is available.',
+    invoker:{ x:500, y:450, hp:700, hpMax:700, mana:600, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({}),
+    allies:[ { x:440,y:470,hp:600,hpMax:600, hero:'drow_ranger', label:'Drow Ranger' }, { x:420,y:420,hp:640,hpMax:640, hero:'crystal_maiden', label:'Crystal Maiden' } ],
+    enemies:[ { x:1400,y:200,hp:760,hpMax:760, hero:'centaur', label:'Centaur Warrunner' }, { x:1440,y:250,hp:720,hpMax:720, hero:'puck', label:'Puck' } ],
+    threats:[],
+    options:[
+      { label:'Hold your spells and reposition your team toward a good objective instead.', quality:'excellent', categories:['Restraint','Positioning'], feedback:'Excellent — there is no target in range and no immediate threat, so there\'s nothing to spend a cooldown on yet. Preserving Tornado/EMP for when the enemies actually commit is worth far more than using them on an empty map.', action:{ move:true } },
+      { label:'Cast Tornado toward the distant enemy heroes anyway.', quality:'bad', categories:['Restraint','Spell Selection'], feedback:'Bad Tornado — they\'re far outside its range and not engaging; this just burns a long cooldown for zero effect and leaves you without your best initiation tool when a real chance appears.', action:{ cast:'tornado', at:{ point:{x:1420,y:225} } } },
+      { label:'Walk your team toward the enemies to force a fight.', quality:'questionable', categories:['Restraint','Fight Awareness'], feedback:'Questionable — nothing is wrong with looking for a fight, but marching in without a plan or a clear advantage just to "do something" gives up the safe positioning your team currently has for no real gain.' },
+      { label:'Cast EMP on your own team\'s position out of caution.', quality:'bad', categories:['Restraint','Spell Selection'], feedback:'Bad decision — EMP drains mana from enemies caught in it; cast on your own team it does nothing useful and wastes a spell that had no reason to be used this moment.', action:{ cast:'emp', at:{ point:{x:430,y:445} } } }
+    ]
+  },
+  { id:'hard-01', category:'Fight Awareness', difficulty:3,
+    title:'Too Much Happening At Once',
+    intro:'An enemy hero is fleeing alone at very low health. Meanwhile, your support is being chased by a different enemy hero near your own tower. A third group of three enemy heroes is moving together further away. Chaos Meteor is still on cooldown.',
+    invoker:{ x:700, y:500, hp:560, hpMax:700, mana:420, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({ chaosmeteor:22 }),
+    allies:[ { x:520,y:560,hp:150,hpMax:600,facing:Math.PI, hero:'witch_doctor', label:'Witch Doctor (Support)' } ],
+    enemies:[
+      { x:1250,y:300,hp:60,hpMax:760,facing:0, state:'flee', hero:'drow_ranger', label:'Drow Ranger (fleeing, low HP)' },
+      { x:470,y:540,hp:660,hpMax:700,facing:Math.PI*1.1, state:'chase-ally', chaseAllyIndex:0, hero:'axe', label:'Axe (chasing support)' },
+      { x:1100,y:650,hp:720,hpMax:760, hero:'lina', label:'Lina' }, { x:1150,y:690,hp:700,hpMax:740, hero:'lion', label:'Lion' }, { x:1180,y:630,hp:740,hpMax:780, hero:'sven', label:'Sven' }
+    ],
+    threats:[ { from:{team:'enemies',i:1}, to:{team:'allies',i:0} } ],
+    options:[
+      { label:'Cast Cold Snap on the enemy chasing your support.', quality:'excellent', categories:['Ally Protection','Fight Awareness'], feedback:'Excellent — an ally actually dying is a far bigger swing than a single low-value kill escaping or repositioning early against a group that hasn\'t engaged yet. Saving your support first is the highest-value action available.', action:{ cast:'coldsnap', at:{team:'enemies', i:1} } },
+      { label:'Cast Sun Strike on the fleeing low-HP enemy hero to secure the kill.', quality:'good', categories:['Kill Recognition'], feedback:'Good alternative — the kill is real value and Sun Strike can reach it from anywhere, but it does nothing for your support, who may die in the time it takes to land.', action:{ cast:'sunstrike', at:{team:'enemies', i:0} } },
+      { label:'Cast Tornado on the group of three distant enemies.', quality:'questionable', categories:['Fight Awareness','Target Selection'], feedback:'Questionable — hitting three heroes is normally strong value, but they haven\'t engaged yet and this completely ignores an ally who is in immediate danger of dying right now.', action:{ cast:'tornado', at:{ point:{x:1143,y:657} } } },
+      { label:'Reposition and wait to see how the situation develops.', quality:'bad', categories:['Fight Awareness','Restraint'], feedback:'Bad decision — with an ally being actively chased at low HP, this is not a moment for patience; every second of delay makes saving them less likely.', action:{ wait:true } }
+    ]
+  },
+  { id:'hard-02', category:'Disengagement', difficulty:3,
+    title:'Tempting, But Not Worth It',
+    intro:'Two of your allies are retreating at low health after a losing fight. One enemy hero, also low on health, is chasing them alone just ahead of three other enemy heroes following some distance behind at full health.',
+    invoker:{ x:700, y:500, hp:480, hpMax:700, mana:380, manaMax:600, facing:Math.PI },
+    cooldowns: tacCooldowns({ sunstrike:9 }),
+    allies:[ { x:500,y:480,hp:140,hpMax:600,facing:Math.PI, role:'flee', hero:'crystal_maiden', label:'Crystal Maiden' }, { x:460,y:530,hp:190,hpMax:640,facing:Math.PI, role:'flee', hero:'phantom_assassin', label:'Phantom Assassin' } ],
+    enemies:[
+      { x:620,y:500,hp:110,hpMax:760,facing:Math.PI, state:'chase-ally', chaseAllyIndex:1, hero:'queenofpain', label:'Queen of Pain (low HP, chasing)' },
+      { x:950,y:470,hp:780,hpMax:800, state:'chase-ally', chaseAllyIndex:1, hero:'tidehunter', label:'Tidehunter' }, { x:1000,y:510,hp:760,hpMax:780, state:'chase-ally', chaseAllyIndex:1, hero:'witch_doctor', label:'Witch Doctor' }, { x:1030,y:440,hp:800,hpMax:820, state:'chase-ally', chaseAllyIndex:1, hero:'juggernaut', label:'Juggernaut' }
+    ],
+    threats:[ { from:{team:'enemies',i:0}, to:{team:'allies',i:1} } ],
+    options:[
+      { label:'Cast Ice Wall behind your retreating allies to block all four pursuers.', quality:'excellent', categories:['Disengagement','Ally Protection'], feedback:'Excellent — your team is already behind and two allies are critically low. Sealing off the entire chase, including the three full-health enemies still following, protects everyone instead of gambling for one extra kill.', action:{ cast:'icewall' } },
+      { label:'Cast Tornado on the lone low-HP chaser to try to secure the kill.', quality:'bad', categories:['Kill Recognition','Fight Awareness'], feedback:'Bad decision — even if the kill lands, your two allies remain exposed to three full-health enemies right behind, who can close the gap while Tornado is on cooldown. One kill isn\'t worth risking two allies.', action:{ cast:'tornado', at:{team:'enemies', i:0} } },
+      { label:'Cast Tornado through the group of three pursuing enemies instead.', quality:'good', categories:['Disengagement'], feedback:'Good alternative — it disables the bigger, more dangerous threat and buys real time, though it doesn\'t seal the path the way a wall placed behind your retreating allies would.', action:{ cast:'tornado', at:{ point:{x:993,y:473} } } },
+      { label:'Keep retreating without casting anything.', quality:'acceptable', categories:['Disengagement'], feedback:'Acceptable — simply continuing to retreat is safe and reasonable, but with four pursuers and two critically low allies, spending a control spell to fully cut off the chase is the safer, higher-value choice.', action:{ move:true } }
+    ]
+  },
+  { id:'hard-03', category:'Kill Recognition', difficulty:3,
+    title:'The Combo Already Landed — Now What?',
+    intro:'Tornado and EMP were already used moments ago. One enemy hero is now isolated at very low health near your position. A second enemy hero, at full health, is retreating alone in the opposite direction. One of your allies is also at low health nearby.',
+    invoker:{ x:650, y:480, hp:600, hpMax:700, mana:260, manaMax:600, facing:0 },
+    cooldowns: tacCooldowns({ tornado:34, emp:41 }),
+    allies:[ { x:560,y:520,hp:170,hpMax:600,facing:0, hero:'dazzle', label:'Dazzle' } ],
+    enemies:[ { x:720,y:460,hp:90,hpMax:760,facing:Math.PI*0.2, hero:'puck', label:'Puck (isolated, low HP)' }, { x:1200,y:250,hp:800,hpMax:800,facing:Math.PI*1.4, state:'flee', hero:'drow_ranger', label:'Drow Ranger (retreating, full HP)' } ],
+    threats:[],
+    options:[
+      { label:'Cast Chaos Meteor rolled toward the isolated low-HP enemy hero.', quality:'excellent', categories:['Kill Recognition','Spell Selection'], feedback:'Excellent — the original combo already did its job; the highest-value action now is finishing the isolated, nearly-dead target in front of you rather than chasing the healthy hero who is already out of reach.', action:{ cast:'chaosmeteor', at:{team:'enemies', i:0} } },
+      { label:'Cast Alacrity on your low-HP ally and continue attacking the isolated enemy together.', quality:'good', categories:['Ally Protection','Kill Recognition'], feedback:'Good alternative — it still secures the kill with your ally\'s help and gives them more safety through faster attacks, though it\'s slightly slower to finish the target than a direct damage spell.', action:{ cast:'alacrity', at:{team:'allies', i:0} } },
+      { label:'Cast Chaos Meteor rolled toward the retreating full-HP enemy hero instead.', quality:'bad', categories:['Target Selection','Fight Awareness'], feedback:'Bad decision — this ignores the nearly-free kill right next to you in favor of chasing a full-health hero who is already retreating and far outside effective range; the fight already handed you the better target.', action:{ cast:'chaosmeteor', at:{team:'enemies', i:1} } },
+      { label:'Hold your remaining spells since Tornado and EMP are both down.', quality:'bad', categories:['Cooldown Management','Kill Recognition'], feedback:'Bad decision — Tornado and EMP being on cooldown doesn\'t mean there\'s nothing to do; Chaos Meteor and Deafening Blast are still available, and there is a nearly-dead enemy hero standing right there to finish.', action:{ wait:true } }
+    ]
+  }
+];
+
+// Puzzle data above focuses on narrative fields only — fill in the shared
+// rendering fields (collision radius, matching the live game's hero scale)
+// once here instead of repeating them in every hand-authored unit literal.
+const TAC_RADIUS = U(27);
+TACTICAL_PUZZLES.forEach(p => {
+  p.invoker.radius = TAC_RADIUS;
+  (p.allies||[]).forEach(u => u.radius = TAC_RADIUS);
+  (p.enemies||[]).forEach(u => u.radius = TAC_RADIUS);
+});
+
+function tacResolve(p, ref){
+  if(!ref) return null;
+  if(ref.team === 'invoker') return p.invoker;
+  return (p[ref.team]||[])[ref.i];
+}
+
+function tacHpColor(u){
+  const frac = u.hp / u.hpMax;
+  if(frac <= 0.3) return '#e0553a';
+  if(frac <= 0.6) return '#e8c94a';
+  return '#4caf6b';
+}
+
+function tacCategoryEntry(cat){
+  if(!tacticalCategoryStats[cat]) tacticalCategoryStats[cat] = { sum:0, count:0 };
+  return tacticalCategoryStats[cat];
+}
+
+// Picks a different puzzle at random — used by the "New Puzzle" button so
+// players can jump around/replay instead of only progressing sequentially.
+function randomTacticalIndex(){
+  if(TACTICAL_PUZZLES.length <= 1) return 0;
+  let i;
+  do { i = randInt(0, TACTICAL_PUZZLES.length-1); } while(i === tacticalIndex);
+  return i;
+}
+
+function startTacticalPuzzle(idx){
+  tacticalIndex = ((idx % TACTICAL_PUZZLES.length) + TACTICAL_PUZZLES.length) % TACTICAL_PUZZLES.length;
+  currentTacticalPuzzle = TACTICAL_PUZZLES[tacticalIndex];
+  tacticalAnswered = false;
+  tacticalPhase = 'frozen';
+  tacticalAllies = [];
+  document.getElementById('hud-bottom').style.display = 'none';
+  document.getElementById('log').style.display = 'none';
+  renderTacticalPuzzleUI();
+}
+
+// Splices the current puzzle's own invoker/enemies straight into the real
+// simulation's global state (player/enemies) so the actual spell-cast,
+// collision, and movement engine used everywhere else in the app can run
+// completely unmodified — this is a genuine playout, not a separate,
+// simplified mini-simulation. Hero-teammate allies stay in the separate
+// tacticalAllies[] layer (see updateTacticalAllies/drawTacticalAllies)
+// since they aren't Forge Spirits and don't fit the real allies[] shape.
+function enterTacticalLive(){
+  if(mode !== 'tactical' || tacticalPhase === 'live') return;
+  tacticalPhase = 'live';
+  const p = currentTacticalPuzzle;
+
+  Object.assign(player, {
+    x: p.invoker.x, y: p.invoker.y, radius: p.invoker.radius, facing: p.invoker.facing || 0,
+    moveTarget: null, speed: U(280),
+    orbLevels: { q:3, w:3, e:3 }, invokeLevel: 3,
+    orbQueue: [], slots: [null, null], cooldowns: Object.assign({}, p.cooldowns),
+    invisible: false, buffs: {}, attackTarget: null, attackCd: 0, attackRange: U(600), alacritied: 0
+  });
+
+  enemies = p.enemies;
+  enemies.forEach(en => {
+    en.airborne = en.airborne || { active:false, timer:0, duration:0 };
+    en.stunTimer = en.stunTimer || 0;
+    en.wallSlow = en.wallSlow || 0;
+    en.chilled = en.chilled || 0;
+    en.alacritied = en.alacritied || 0;
+    en.speed = en.speed || U(enemySpeedSetting);
+    en.portraitKey = en.portraitKey || (p.enemies.indexOf(en) % 2 === 0 ? 'a' : 'b');
+  });
+
+  tacticalAllies = (p.allies || []).map(a => Object.assign({ speed: U(280), role: a.role || 'hold' }, a));
+
+  allies = []; effects = []; moveClicks = []; attackFx = []; attackProjectiles = []; allyProjectiles = [];
+  targetingSpell = null; targetingSlot = null; pendingReleaseSlot = null;
+
+  document.getElementById('hud-bottom').style.display = '';
+  document.getElementById('log').style.display = '';
+  logEl.innerHTML = '';
+  log('The fight is live — act on your read of the situation. (The 4 options below still work too.)');
+  tacticalLiveDeadline = performance.now() + TACTICAL_LIVE_TIMEOUT;
+  updateCamera();
+  updateHUD();
+}
+
+// Matches a real action the player just took against the current puzzle's
+// authored options, so live play can be graded the same way a button click
+// is. Not every option is written to be live-matchable (some are only
+// mechanically distinguishable by narrative reasoning, e.g. "cast the same
+// spell on the same target, but for the wrong strategic reason") — those
+// simply have no `action` field and remain reachable only via the option
+// buttons, per design.
+function findMatchingOption(p, real){
+  const opts = p.options;
+  if(real.type === 'cast'){
+    const candidates = opts.filter(o => o.action && o.action.cast === real.spell);
+    if(candidates.length === 0) return null;
+    if(candidates.length === 1) return candidates[0];
+    let best = null, bestScore = Infinity;
+    for(const o of candidates){
+      const ref = o.action.at;
+      let score = Infinity;
+      if(!ref){
+        score = (real.unit || real.point) ? Infinity : 0;
+      } else if(ref.point){
+        if(real.point) score = dist(real.point, ref.point);
+      } else {
+        const u = tacResolve(p, ref);
+        if(real.unit && u === real.unit) score = 0;
+        else if(real.point && u) score = dist(real.point, u);
+      }
+      if(score < bestScore){ bestScore = score; best = o; }
+    }
+    return best;
+  }
+  if(real.type === 'attack'){
+    const candidates = opts.filter(o => o.action && o.action.attack);
+    for(const o of candidates){
+      const u = tacResolve(p, o.action.attack);
+      if(u && u === real.unit) return o;
+    }
+    // Only fall back to a single unambiguous attack option when there's no
+    // target-specific candidate it could be confused with — if multiple
+    // attack options reference different targets, an unmatched target
+    // should NOT silently credit the wrong one.
+    return candidates.length === 1 ? candidates[0] : null;
+  }
+  if(real.type === 'move'){
+    return opts.find(o => o.action && o.action.move) || null;
+  }
+  if(real.type === 'wait'){
+    return opts.find(o => o.action && o.action.wait) || null;
+  }
+  return null;
+}
+
+// Entry point for BOTH the live-action path and (indirectly) confirms the
+// "already answered" guard before any grade is applied.
+function gradeTacticalAction(option, real){
+  if(tacticalAnswered) return;
+  if(option){
+    applyTacticalGrade(currentTacticalPuzzle.options.indexOf(option), true);
+  } else {
+    applyTacticalFallbackGrade(real);
+  }
+}
+
+// Used when a real live action doesn't match any authored option — still
+// gives real feedback and lets the player compare against the modeled
+// answers, rather than leaving them stuck with no response.
+function applyTacticalFallbackGrade(real){
+  if(tacticalAnswered) return;
+  tacticalAnswered = true;
+  const p = currentTacticalPuzzle;
+
+  const optsEl = document.getElementById('tacOptions');
+  Array.from(optsEl.children).forEach((btn, idx) => {
+    const oq = TAC_QUALITY[p.options[idx].quality];
+    btn.disabled = true;
+    btn.innerHTML = `${p.options[idx].label}<span class="qtag ${p.options[idx].quality}">${oq.label.replace(' decision','')}</span>`;
+  });
+
+  const descByType = {
+    cast: `casting ${real.spell ? (SPELLS[real.spell] ? SPELLS[real.spell].name : real.spell) : 'a spell'}`,
+    attack: 'attacking',
+    move: 'repositioning',
+    wait: 'hesitating without acting'
+  };
+  const fb = document.getElementById('tacFeedback');
+  fb.style.display = 'block';
+  fb.innerHTML = `
+    <div class="qtitle acceptable">Not one of the modeled responses</div>
+    <div class="qtext">You responded by ${descByType[real.type] || 'taking action'} — that wasn't one of this puzzle's specific authored answers, so it isn't scored against the categories below. Compare it to the 4 options to see the intended reasoning.</div>
+    <div class="qnext"><button class="ctrl" id="tacNextBtn">Next Puzzle →</button></div>
+  `;
+  document.getElementById('tacNextBtn').onclick = () => startTacticalPuzzle(tacticalIndex + 1);
+}
+
+function renderTacticalPuzzleUI(){
+  const p = currentTacticalPuzzle;
+  document.getElementById('tacTitle').textContent = p.title;
+  document.getElementById('tacIntro').textContent = p.intro;
+  document.getElementById('tacPuzzleNum').textContent = `${tacticalIndex+1} / ${TACTICAL_PUZZLES.length} · ${'★'.repeat(p.difficulty)}${'☆'.repeat(3-p.difficulty)}`;
+  document.getElementById('tacScore').textContent = tacticalScore;
+  document.getElementById('tacStreak').textContent = tacticalStreak;
+
+  const inv = p.invoker;
+  const hpPct = clamp(inv.hp/inv.hpMax, 0, 1) * 100;
+  const manaPct = clamp(inv.mana/inv.manaMax, 0, 1) * 100;
+  const spellsHtml = TAC_SPELLBOOK.map(key => {
+    const meta = SPELLS[key];
+    const cd = (p.cooldowns && p.cooldowns[key]) || 0;
+    return `<div class="tac-spell-chip ${cd<=0?'ready':''}">${meta.icon} ${meta.name} — ${cd<=0?'Ready':cd.toFixed(0)+'s'}</div>`;
+  }).join('');
+  document.getElementById('tacInvokerStatus').innerHTML = `
+    <div class="tac-bar-wrap">HP <div class="tac-bar"><div class="tac-bar-fill" style="width:${hpPct}%;background:${tacHpColor(inv)}"></div></div> ${inv.hp}/${inv.hpMax}</div>
+    <div class="tac-bar-wrap">Mana <div class="tac-bar"><div class="tac-bar-fill" style="width:${manaPct}%;background:#3a8fd6"></div></div> ${inv.mana}/${inv.manaMax}</div>
+    <div class="tac-spellbook">${spellsHtml}</div>
+  `;
+
+  const optsEl = document.getElementById('tacOptions');
+  optsEl.innerHTML = p.options.map((opt,i) => `<button class="tac-option" data-idx="${i}">${opt.label}</button>`).join('');
+  Array.from(optsEl.children).forEach(btn => {
+    btn.onclick = () => chooseTacticalOption(parseInt(btn.dataset.idx, 10));
+  });
+
+  const fb = document.getElementById('tacFeedback');
+  fb.style.display = 'none';
+  fb.innerHTML = '';
+  updateTacticalCategoryStatsUI();
+}
+
+function chooseTacticalOption(i){
+  applyTacticalGrade(i, false);
+}
+
+// Shared grading/reveal logic for BOTH paths: clicking one of the 4 option
+// buttons (viaLive=false, always available, instant) and a matched real
+// live action (viaLive=true, only reachable once the puzzle has gone live).
+function applyTacticalGrade(i, viaLive){
+  if(tacticalAnswered) return;
+  tacticalAnswered = true;
+  const p = currentTacticalPuzzle;
+  const opt = p.options[i];
+  const q = TAC_QUALITY[opt.quality];
+  tacticalScore += q.points;
+  if(opt.quality === 'excellent' || opt.quality === 'good') tacticalStreak++;
+  else tacticalStreak = 0;
+  (opt.categories||[]).forEach(cat => {
+    const entry = tacCategoryEntry(cat);
+    entry.sum += q.points;
+    entry.count++;
+  });
+
+  // Reveal every option's quality (like showing why the other chess-puzzle
+  // candidate moves were inferior), disable further clicks, and highlight
+  // whichever one was actually chosen (or matched from live play).
+  const optsEl = document.getElementById('tacOptions');
+  Array.from(optsEl.children).forEach((btn, idx) => {
+    const oq = TAC_QUALITY[p.options[idx].quality];
+    btn.disabled = true;
+    btn.classList.toggle('chosen', idx === i);
+    btn.innerHTML = `${p.options[idx].label}<span class="qtag ${p.options[idx].quality}">${oq.label.replace(' decision','')}</span>`;
+  });
+
+  const fb = document.getElementById('tacFeedback');
+  fb.style.display = 'block';
+  fb.innerHTML = `
+    ${viaLive ? '<div class="qtext" style="opacity:0.75;margin-bottom:4px;">Based on what you actually did in the fight:</div>' : ''}
+    <div class="qtitle ${opt.quality}">${q.label}</div>
+    <div class="qtext">${opt.feedback}</div>
+    <div class="qnext"><button class="ctrl" id="tacNextBtn">Next Puzzle →</button></div>
+  `;
+  document.getElementById('tacNextBtn').onclick = () => startTacticalPuzzle(tacticalIndex + 1);
+
+  document.getElementById('tacScore').textContent = tacticalScore;
+  document.getElementById('tacStreak').textContent = tacticalStreak;
+  updateTacticalCategoryStatsUI();
+}
+
+function updateTacticalCategoryStatsUI(){
+  const el = document.getElementById('tacCategoryStats');
+  const cats = Object.keys(tacticalCategoryStats);
+  if(!cats.length){ el.innerHTML = ''; return; }
+  el.innerHTML = cats.map(cat => {
+    const e = tacticalCategoryStats[cat];
+    const avg = Math.round(e.sum / e.count);
+    return `<div class="tac-cat-chip">${cat}: <b>${avg}</b> <span style="color:#5b6472">(${e.count})</span></div>`;
+  }).join('');
+}
+
+function renderTacticalScene(){
+  drawGrid();
+  const p = currentTacticalPuzzle;
+  if(!p) return;
+
+  // Dashed red "threat lines" drawn under the units, showing who is
+  // currently attacking/chasing whom.
+  (p.threats||[]).forEach(t => {
+    const from = tacResolve(p, t.from), to = tacResolve(p, t.to);
+    if(!from || !to) return;
+    const a = worldToScreen(from.x, from.y), b = worldToScreen(to.x, to.y);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(224,85,58,0.7)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,5]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.restore();
+  });
+
+  (p.allies||[]).forEach(u => {
+    drawUnit(u, { color:'#4caf6b', hpMax:u.hpMax, hpColor: tacHpColor(u), label: u.label || 'Ally Hero', portrait: TAC_HERO_IMAGES[u.hero], facing: u.facing });
+  });
+  (p.enemies||[]).forEach((u, i) => {
+    drawUnit(u, { color:'#c0392b', hpMax:u.hpMax, hpColor: tacHpColor(u), label: u.label || 'Enemy Hero', portrait: TAC_HERO_IMAGES[u.hero] || HERO_IMAGES[i % 2 === 0 ? 'a' : 'b'], facing: u.facing });
+  });
+  drawUnit(p.invoker, { color:'#2f6fd6', hpMax:p.invoker.hpMax, hpColor: tacHpColor(p.invoker), label:'Invoker', portrait: HERO_IMAGES.player, facing: p.invoker.facing });
+}
+
+/* ---------------------------------------------------------------------
+   Orb math shared by Orb Shift + Invoke Chain
+   The 3-orb queue is a rolling window: every press drops the oldest orb
+   and appends the new one. Only the Q/W/E COUNTS (not their order)
+   determine which spell is invoked (see ORB_COMBOS), but order absolutely
+   matters for what a *future* press turns the queue into — so "shortest
+   path" is a real shortest-path search over queue states, not just a
+   count-difference calculation.
+--------------------------------------------------------------------- */
+function countsOfLetters(letters){
+  const c = { q:0, w:0, e:0 };
+  letters.forEach(l => c[l]++);
+  return c;
+}
+function countsFromCombo(combo){ return countsOfLetters(combo.toLowerCase().split('')); }
+function countsEqual(a, b){ return a.q === b.q && a.w === b.w && a.e === b.e; }
+
+// BFS from ONE concrete 3-letter state to the nearest state whose Q/W/E
+// counts match targetCounts. Returns { presses, path:[letters pressed],
+// states:[state after each press, states[0] is the start] }. Max real
+// distance is always <=3 (pressing 3 keys fully replaces the queue
+// regardless of where it started), so depth 6 is a generous safety cap.
+function shortestOrbPath(startState, targetCounts){
+  const startCounts = countsOfLetters(startState.split(''));
+  if(countsEqual(startCounts, targetCounts)) return { presses:0, path:[], states:[startState] };
+  let frontier = [{ state:startState, path:[], states:[startState] }];
+  const visited = new Set([startState]);
+  for(let depth=1; depth<=6; depth++){
+    const next = [];
+    for(const node of frontier){
+      for(const letter of ['q','w','e']){
+        const newState = node.state.slice(1) + letter;
+        if(countsEqual(countsOfLetters(newState.split('')), targetCounts)){
+          return { presses:depth, path:node.path.concat(letter), states:node.states.concat(newState) };
+        }
+        if(!visited.has(newState)){
+          visited.add(newState);
+          next.push({ state:newState, path:node.path.concat(letter), states:node.states.concat(newState) });
+        }
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
+function formatKeys(letters){ return letters.map(l => l.toUpperCase()).join(' '); }
+// Renders one orb-queue letter as an HTML chip. Q/W/E render as plain
+// textured circles (matching the real in-game orb icons, which have no
+// letter on them at all) so recognition trains on color/texture, not text;
+// the title attribute keeps the letter available on hover for accessibility.
+// 'r' (an invoke key press, not an orb) keeps a visible label since it has
+// no in-game orb appearance to mimic.
+const ORB_CHIP_NAMES = { q:'Quas', w:'Wex', e:'Exort', r:'Invoke' };
+function orbChipHtml(l, showLetter){
+  const label = l === 'r' ? 'R' : (showLetter ? l.toUpperCase() : '');
+  return `<div class="orb-chip ${l}" title="${ORB_CHIP_NAMES[l] || l.toUpperCase()}">${label}</div>`;
+}
+// Replays a sequence of orb presses from a start state, returning the state
+// after each press (states[0] is the start, same shape shortestOrbPath uses)
+// so any actual (not just BFS-found) press sequence can be explained too.
+function simulateStates(startState, path){
+  let state = startState;
+  const states = [state];
+  path.forEach(l => { state = state.slice(1) + l; states.push(state); });
+  return states;
+}
+// Renders a BFS result as "EEW -> Q -> EWQ" so the player can see exactly
+// which orb got replaced and what the queue becomes after each press.
+function explainTransition(states, path){
+  const parts = [states[0].toUpperCase()];
+  for(let i=0;i<path.length;i++){ parts.push(path[i].toUpperCase()); parts.push(states[i+1].toUpperCase()); }
+  return parts.join(' \u2192 ');
+}
+function ensureOrbQueueLength3(){
+  while(player.orbQueue.length < 3) player.orbQueue.push(choice(['q','w','e']));
+  if(player.orbQueue.length > 3) player.orbQueue = player.orbQueue.slice(-3);
+}
+
+/* ---------------------------------------------------------------------
+   Orb Shift: "given my CURRENT orbs, how few key presses does it take to
+   invoke this one target spell?" Trains individual orb-state transitions.
+   The orb queue is never reset between targets — wherever it ends up
+   after invoking is the starting point for the next target, exactly like
+   real back-to-back invoking.
+--------------------------------------------------------------------- */
+let orbShiftState = null; // { target, startState, pressLog, wrongInvokes, startTime, done }
+let orbShiftAttempts = 0, orbShiftPerfect = 0, orbShiftStreak = 0, orbShiftBestStreak = 0;
+let orbShiftAutoAdvance = false;
+let orbShiftAutoAdvanceTimer = null;
+function cancelOrbShiftAutoAdvance(){
+  if(orbShiftAutoAdvanceTimer){ clearInterval(orbShiftAutoAdvanceTimer); orbShiftAutoAdvanceTimer = null; }
+}
+function scheduleOrbShiftAutoAdvance(){
+  cancelOrbShiftAutoAdvance();
+  let n = 2;
+  const update = () => {
+    const label = document.getElementById('osAutoAdvanceLabel');
+    if(label) label.textContent = `Next target in ${n}s...`;
+  };
+  update();
+  orbShiftAutoAdvanceTimer = setInterval(()=>{
+    if(mode !== 'orbshift' || !orbShiftAutoAdvance){ cancelOrbShiftAutoAdvance(); return; }
+    n--;
+    if(n <= 0){ cancelOrbShiftAutoAdvance(); startOrbShiftChallenge(); }
+    else update();
+  }, 1000);
+}
+
+function startOrbShiftChallenge(){
+  cancelOrbShiftAutoAdvance();
+  ensureOrbQueueLength3();
+  const keys = Object.keys(SPELLS);
+  let target;
+  do { target = choice(keys); } while(orbShiftState && target === orbShiftState.target);
+  orbShiftState = { target, startState: player.orbQueue.join(''), pressLog: [], wrongInvokes: 0, startTime: performance.now(), done: false };
+  document.getElementById('osFeedback').style.display = 'none';
+  updateOrbShiftUI();
+}
+
+function orbShiftHandleOrb(letter){
+  if(!orbShiftState || orbShiftState.done) return;
+  orbShiftState.pressLog.push(letter);
+  updateOrbShiftUI();
+}
+
+function orbShiftHandleInvoke(spellKey){
+  if(!orbShiftState || orbShiftState.done) return;
+  orbShiftState.pressLog.push('r');
+  if(spellKey === orbShiftState.target){
+    finishOrbShiftAttempt();
+  } else {
+    orbShiftState.wrongInvokes++;
+    log(`That invoked ${SPELLS[spellKey].name}, not the target (${SPELLS[orbShiftState.target].name}) \u2014 keep adjusting your orbs.`);
+    updateOrbShiftUI();
+  }
+}
+
+function finishOrbShiftAttempt(){
+  const st = orbShiftState;
+  st.done = true;
+  const optimal = shortestOrbPath(st.startState, countsFromCombo(SPELLS[st.target].combo));
+  const optimalPresses = optimal.presses + 1;
+  const actualPresses = st.pressLog.length;
+  const timeMs = performance.now() - st.startTime;
+
+  orbShiftAttempts++;
+  const isPerfect = actualPresses === optimalPresses;
+  if(isPerfect){ orbShiftPerfect++; orbShiftStreak++; orbShiftBestStreak = Math.max(orbShiftBestStreak, orbShiftStreak); }
+  else orbShiftStreak = 0;
+
+  let tier, tierLabel;
+  if(isPerfect){ tier = 'perfect'; tierLabel = 'Perfect \u2014 fewest possible keys'; }
+  else if(actualPresses <= optimalPresses + 1){ tier = 'good'; tierLabel = 'Good \u2014 close to optimal'; }
+  else if(actualPresses <= optimalPresses + 3){ tier = 'ok'; tierLabel = 'Correct, but inefficient'; }
+  else { tier = 'bad'; tierLabel = 'Correct, but very inefficient'; }
+
+  const yourKeys = formatKeys(st.pressLog);
+  const optimalKeys = (optimal.path.length ? formatKeys(optimal.path) + ' ' : '') + 'R';
+  const actualOrbPath = st.pressLog.filter(p => p !== 'r');
+  const actualStates = simulateStates(st.startState, actualOrbPath);
+  const whatHappened = actualOrbPath.length
+    ? explainTransition(actualStates, actualOrbPath)
+    : `${st.startState.toUpperCase()} (no orb change needed)`;
+  const optimalPath = optimal.path.length
+    ? explainTransition(optimal.states, optimal.path)
+    : `${st.startState.toUpperCase()} (no orb change needed)`;
+
+  const fb = document.getElementById('osFeedback');
+  fb.style.display = 'block';
+  fb.innerHTML = `
+    <div class="qtitle ${tier}">${tierLabel}</div>
+    <div class="qrow">Correctness: <b>${st.wrongInvokes === 0 ? 'First try \u2705' : `${st.wrongInvokes} misinvoke${st.wrongInvokes===1?'':'s'} before landing it`}</b></div>
+    <div class="qrow">Your input: <b>${yourKeys}</b> \u2014 ${actualPresses} key${actualPresses===1?'':'s'}</div>
+    <div class="qrow">Minimum possible: <b>${optimalKeys}</b> \u2014 ${optimalPresses} key${optimalPresses===1?'':'s'}</div>
+    <div class="qrow">Speed: <b>${(timeMs/1000).toFixed(1)}s</b></div>
+    ${!isPerfect ? `
+    <div class="qrow">What happened: <b>${whatHappened}</b></div>
+    <div class="qrow">Optimal path: <b>${optimalPath}</b></div>
+    ` : ''}
+    <div class="qnext"><button class="ctrl" id="osNextBtn">Next Target \u2192</button><span id="osAutoAdvanceLabel" class="os-auto-countdown"></span></div>
+  `;
+  document.getElementById('osNextBtn').onclick = () => startOrbShiftChallenge();
+  document.getElementById('osAttempts').textContent = orbShiftAttempts;
+  document.getElementById('osScore').textContent = orbShiftPerfect;
+  document.getElementById('osStreak').textContent = orbShiftStreak;
+  document.getElementById('osBestStreak').textContent = orbShiftBestStreak;
+  updateOrbShiftUI();
+  if(orbShiftAutoAdvance) scheduleOrbShiftAutoAdvance();
+}
+
+function updateOrbShiftUI(){
+  document.getElementById('osOrbChips').innerHTML = player.orbQueue.map(l => orbChipHtml(l)).join('');
+  const pressEl = document.getElementById('osPressChips');
+  const targetEl = document.getElementById('osTargetSpell');
+  if(!orbShiftState){ pressEl.innerHTML = ''; targetEl.textContent = '\u2014'; return; }
+  pressEl.innerHTML = orbShiftState.pressLog.length
+    ? orbShiftState.pressLog.map(l => orbChipHtml(l)).join('')
+    : '<span style="color:#5b6472;font-size:12px;">No input yet</span>';
+  const meta = SPELLS[orbShiftState.target];
+  targetEl.innerHTML = `${meta.icon} ${meta.name}`;
+}
+
+/* ---------------------------------------------------------------------
+   Invoke Chain: "how efficiently can I execute this USEFUL SEQUENCE of
+   spells?" The chains below are hand-authored to reflect realistic
+   gameplay logic (setup->damage, control->pressure, catch->finish,
+   peel->escape) — never picked for orb convenience. Orb optimization is
+   layered on top of an already-sensible sequence, exactly like real play.
+--------------------------------------------------------------------- */
+const CHAIN_TEMPLATES = {
+  beginner: [
+    { spells:['tornado','emp'], note:'Setup \u2192 mana burn: lift them with Tornado, then drain mana while they\u2019re airborne and can\u2019t escape it.' },
+    { spells:['chaosmeteor','deafeningblast'], note:'Damage \u2192 displacement: roll Chaos Meteor through, then push them with Deafening Blast to keep them inside it.' },
+    { spells:['coldsnap','alacrity'], note:'Control \u2192 right-click pressure: mark them with Cold Snap, then Alacrity yourself to profit from every attack.' },
+    { spells:['tornado','sunstrike'], note:'Setup \u2192 damage: lift with Tornado, time Sun Strike to land the instant they hit the ground.' },
+    { spells:['deafeningblast','icewall'], note:'Disable \u2192 reposition: push them back with Deafening Blast, then wall off the path behind them.' }
+  ],
+  intermediate: [
+    { spells:['tornado','emp','chaosmeteor','deafeningblast'], note:'Full setup chain: lift, drain mana, roll damage through, then push them along its path.' },
+    { spells:['coldsnap','forgespirit','alacrity'], note:'Control \u2192 sustained pressure: mark them, summon backup, then speed up every attack that follows.' },
+    { spells:['icewall','coldsnap','alacrity'], note:'Peel \u2192 control \u2192 pressure: wall off their escape, mark them, then chase down the stun window.' },
+    { spells:['sunstrike','chaosmeteor','deafeningblast'], note:'Catch \u2192 finish: a delayed burst catches them, rolling damage follows, then displacement keeps them inside it.' },
+    { spells:['ghostwalk','coldsnap','alacrity'], note:'Catch \u2192 control \u2192 pressure: approach unseen, mark them the instant you\u2019re revealed, then chase the stun window.' }
+  ],
+  advanced: [
+    { spells:['tornado','emp','chaosmeteor','deafeningblast','coldsnap','alacrity'], note:'Extended teamfight combo: lift, drain mana, roll damage through, push, then control and chase down the kill.' },
+    { spells:['ghostwalk','tornado','sunstrike','chaosmeteor','deafeningblast'], note:'Ambush chain: approach unseen, lift them, time a delayed burst to land as they fall, then roll damage through and push.' },
+    { spells:['icewall','ghostwalk','alacrity','forgespirit','tornado'], note:'Peel \u2192 escape chain: wall off the chase, vanish, speed away, drop backup behind you, then Tornado anyone who still catches up.' },
+    { spells:['tornado','deafeningblast','coldsnap','icewall','ghostwalk'], note:'Escape chain: create separation, push them further back, mark them in case they close again, wall the path, then vanish clean.' }
+  ]
+};
+let chainState = null; // { difficulty, spells, note, stepIndex, startState, pressLog, stepBoundaries, mistakes, startTime, done, tier }
+let chainDifficulty = 'beginner';
+const lastChainTemplate = { beginner:null, intermediate:null, advanced:null };
+let chainAttempts = 0, chainClean = 0, chainStreak = 0;
+let chainAutoAdvance = false;
+let chainAutoAdvanceTimer = null;
+function cancelChainAutoAdvance(){
+  if(chainAutoAdvanceTimer){ clearInterval(chainAutoAdvanceTimer); chainAutoAdvanceTimer = null; }
+}
+// retry=true replays the same chain (used when the last attempt had
+// misinvokes) instead of advancing to a new randomly-picked chain.
+function scheduleChainAutoAdvance(retry){
+  cancelChainAutoAdvance();
+  let n = 2;
+  const update = () => {
+    const label = document.getElementById('icAutoAdvanceLabel');
+    if(label) label.textContent = `${retry ? 'Retry' : 'Next chain'} in ${n}s...`;
+  };
+  update();
+  chainAutoAdvanceTimer = setInterval(()=>{
+    if(mode !== 'chain' || !chainAutoAdvance){ cancelChainAutoAdvance(); return; }
+    n--;
+    if(n <= 0){ cancelChainAutoAdvance(); retry ? retryChainChallenge() : startChainChallenge(); }
+    else update();
+  }, 1000);
+}
+
+function pickChainTemplate(difficulty){
+  const pool = CHAIN_TEMPLATES[difficulty];
+  let tpl;
+  do { tpl = choice(pool); } while(pool.length > 1 && tpl === lastChainTemplate[difficulty]);
+  lastChainTemplate[difficulty] = tpl;
+  return tpl;
+}
+
+function startChainChallenge(difficulty){
+  cancelChainAutoAdvance();
+  if(difficulty) chainDifficulty = difficulty;
+  const tpl = pickChainTemplate(chainDifficulty);
+  beginChainAttempt(tpl.spells, tpl.note);
+  ['beginner','intermediate','advanced'].forEach(d => {
+    document.getElementById('icDiff' + d.charAt(0).toUpperCase() + d.slice(1)).classList.toggle('active', d === chainDifficulty);
+  });
+}
+
+// Re-runs the SAME chain (same spells/note) rather than picking a new one —
+// used both by the manual "Retry Chain" button and by auto-advance when the
+// previous attempt had misinvokes (tier 'bad'), so a failed chain gets
+// practiced again instead of skipped past.
+function retryChainChallenge(){
+  cancelChainAutoAdvance();
+  if(!chainState){ startChainChallenge(); return; }
+  beginChainAttempt(chainState.spells, chainState.note);
+}
+
+function beginChainAttempt(spells, note){
+  ensureOrbQueueLength3();
+  chainState = {
+    difficulty: chainDifficulty, spells: spells.slice(), note,
+    stepIndex: 0, startState: player.orbQueue.join(''), pressLog: [], stepBoundaries: [],
+    mistakes: 0, startTime: performance.now(), done: false
+  };
+  document.getElementById('icFeedback').style.display = 'none';
+  updateChainUI();
+}
+
+function chainHandleOrb(letter){
+  if(!chainState || chainState.done) return;
+  chainState.pressLog.push(letter);
+  updateChainUI();
+}
+
+function chainHandleInvoke(spellKey){
+  if(!chainState || chainState.done) return;
+  chainState.pressLog.push('r');
+  const wanted = chainState.spells[chainState.stepIndex];
+  if(spellKey === wanted){
+    chainState.stepBoundaries.push(chainState.pressLog.length);
+    chainState.stepIndex++;
+    if(chainState.stepIndex >= chainState.spells.length){ finishChainAttempt(); }
+    else {
+      log(`\u2705 ${SPELLS[spellKey].name} \u2014 next: ${SPELLS[chainState.spells[chainState.stepIndex]].name}`);
+      updateChainUI();
+    }
+  } else {
+    chainState.mistakes++;
+    log(`Invoked ${SPELLS[spellKey].name} \u2014 the chain needs ${SPELLS[wanted].name} next. Keep adjusting.`);
+    updateChainUI();
+  }
+}
+
+// Minimal orb presses to turn exact state s into exact state t (order
+// matters, not just counts). With a length-3 FIFO queue: 1 press can only
+// reach states that share s's last two letters as its first two; 2 presses
+// only need s's last letter to match t's first letter; 3 presses can reach
+// ANY state, full stop (the queue is completely replaced either way).
+// optimalPathBetween returns the actual letters to press (so "what should
+// have been pressed" can be shown, not just the count); exactStateDist is
+// just its length, kept separate since the DP below calls it a lot.
+function optimalPathBetween(s, t){
+  if(s === t) return [];
+  if(s.slice(1) === t.slice(0,2)) return [t[2]];
+  if(s[2] === t[0]) return [t[1], t[2]];
+  return [t[0], t[1], t[2]];
+}
+function exactStateDist(s, t){ return optimalPathBetween(s, t).length; }
+// All exact 3-letter states whose Q/W/E counts match targetCounts (1, 3 or
+// 6 of the 27 possible states, depending on how many repeats the target has).
+function statesMatchingCounts(targetCounts){
+  const states = [];
+  for(const a of ['q','w','e']) for(const b of ['q','w','e']) for(const c of ['q','w','e']){
+    const s = a+b+c;
+    if(countsEqual(countsOfLetters([a,b,c]), targetCounts)) states.push(s);
+  }
+  return states;
+}
+// Replays the raw press log (ignoring 'r' invoke presses, which don't touch
+// the orb queue) to recover the EXACT queue state at the moment of each
+// correct invoke. Used purely to break ties below — see computeOptimalChainCost.
+function reconstructStepEndStates(startState, pressLog, stepBoundaries){
+  let queue = startState.split('');
+  const states = [];
+  let bIdx = 0;
+  for(let i = 0; i < pressLog.length; i++){
+    const p = pressLog[i];
+    if(p !== 'r'){ queue.push(p); if(queue.length > 3) queue.shift(); }
+    if(bIdx < stepBoundaries.length && (i+1) === stepBoundaries[bIdx]){
+      states.push(queue.join(''));
+      bIdx++;
+    }
+  }
+  return states;
+}
+// Slices out just the orb letters (q/w/e) pressed during one step, ignoring
+// any 'r' presses in between (invokes, including misinvokes, don't touch the
+// queue) — used to explain "what happened" for that specific step.
+function extractStepOrbPresses(pressLog, stepBoundaries, i){
+  const fromIdx = i === 0 ? 0 : stepBoundaries[i-1];
+  const toIdx = stepBoundaries[i];
+  return pressLog.slice(fromIdx, toIdx).filter(p => p !== 'r');
+}
+// True global-optimal press count for the whole chain. A single step's
+// minimal press count alone isn't enough here: pressing 3 keys in a step
+// fully replaces the queue, so several DIFFERENT end states can all be
+// equally cheap for THAT step but leave you in very different starting
+// spots for the NEXT step. This runs a small DP over the (<=6) exact
+// states that satisfy each step's target, tracking the true minimal
+// cumulative cost to land on each one, then backtracks the winning path
+// so the displayed per-step numbers are internally consistent with an
+// actually-achievable optimal route through the whole chain.
+//
+// When two different routes tie for the global minimum, `preferredStates`
+// (the exact states the PLAYER actually passed through, from
+// reconstructStepEndStates) is used only to break those ties — favoring
+// whichever tied-optimal route matches what actually happened. Without
+// this, an arbitrary tie-break could report a "3 keys optimal" for a step
+// the player did in 2, even though the player's own route was ALSO
+// optimal overall (just a different, equally-cheap allocation across
+// steps) — mathematically not wrong, but confusing to read.
+function computeOptimalChainCost(startState, spellKeys, preferredStates){
+  preferredStates = preferredStates || [];
+  let dp = new Map([[startState, 0]]);
+  const backPointers = [];
+  spellKeys.forEach((key, i) => {
+    const targets = statesMatchingCounts(countsFromCombo(SPELLS[key].combo));
+    const prevPreferred = i === 0 ? startState : preferredStates[i-1];
+    const nextDp = new Map();
+    const back = new Map();
+    targets.forEach(t => {
+      let best = Infinity, bestPrev = null, bestStepCost = 0, bestIsPreferred = false;
+      for(const [s, cost] of dp){
+        const stepCost = exactStateDist(s, t) + 1;
+        const total = cost + stepCost;
+        const isPreferred = s === prevPreferred;
+        if(total < best || (total === best && isPreferred && !bestIsPreferred)){
+          best = total; bestPrev = s; bestStepCost = stepCost; bestIsPreferred = isPreferred;
+        }
+      }
+      nextDp.set(t, best);
+      back.set(t, { prev: bestPrev, stepCost: bestStepCost });
+    });
+    backPointers.push(back);
+    dp = nextDp;
+  });
+  const lastPreferred = preferredStates[preferredStates.length - 1];
+  let bestFinal = null, bestTotal = Infinity, bestIsPreferred = false;
+  for(const [t, cost] of dp){
+    const isPreferred = t === lastPreferred;
+    if(cost < bestTotal || (cost === bestTotal && isPreferred && !bestIsPreferred)){
+      bestTotal = cost; bestFinal = t; bestIsPreferred = isPreferred;
+    }
+  }
+  const perStepRev = [];
+  const statesRev = [bestFinal];
+  let cur = bestFinal;
+  for(let i = backPointers.length - 1; i >= 0; i--){
+    const info = backPointers[i].get(cur);
+    perStepRev.push(info.stepCost);
+    cur = info.prev;
+    statesRev.push(cur);
+  }
+  return { total: bestTotal, perStep: perStepRev.reverse(), states: statesRev.reverse() };
+}
+
+function finishChainAttempt(){
+  const st = chainState;
+  st.done = true;
+  const timeMs = performance.now() - st.startTime;
+  const actualTotal = st.pressLog.length;
+  const actualStepStates = reconstructStepEndStates(st.startState, st.pressLog, st.stepBoundaries);
+  const { total: optimalTotal, perStep: optimalPerStep, states: optimalStates } = computeOptimalChainCost(st.startState, st.spells, actualStepStates);
+  const actualStates = [st.startState, ...actualStepStates];
+
+  chainAttempts++;
+  const clean = st.mistakes === 0;
+  const perfect = clean && actualTotal === optimalTotal;
+  if(clean){ chainClean++; chainStreak++; } else chainStreak = 0;
+
+  let tier, tierLabel;
+  if(perfect){ tier = 'perfect'; tierLabel = 'Flawless \u2014 accurate and optimally efficient'; }
+  else if(clean && actualTotal <= optimalTotal + 2){ tier = 'good'; tierLabel = 'Accurate, close to optimal efficiency'; }
+  else if(clean){ tier = 'ok'; tierLabel = 'Accurate, but inefficient orb transitions'; }
+  else { tier = 'bad'; tierLabel = 'Some spells were invoked out of order'; }
+  st.tier = tier;
+  const failed = tier === 'bad';
+
+  const actualPerStep = st.stepBoundaries.map((b,i) => b - (i===0 ? 0 : st.stepBoundaries[i-1]));
+  const rows = st.spells.map((key,i) => {
+    const meta = SPELLS[key];
+    const actual = actualPerStep[i], opt = optimalPerStep[i];
+    const inefficient = actual > opt;
+    let detail = '';
+    if(inefficient){
+      const actualPath = extractStepOrbPresses(st.pressLog, st.stepBoundaries, i);
+      const whatHappened = actualPath.length
+        ? explainTransition(simulateStates(actualStates[i], actualPath), actualPath)
+        : `${actualStates[i].toUpperCase()} (no orb change needed)`;
+      const optimalPath = optimalPathBetween(optimalStates[i], optimalStates[i+1]);
+      const shouldHaveBeen = optimalPath.length
+        ? explainTransition(simulateStates(optimalStates[i], optimalPath), optimalPath)
+        : `${optimalStates[i].toUpperCase()} (no orb change needed)`;
+      detail = `<div class="ic-step-detail">
+        <div>What happened: <b>${whatHappened}</b></div>
+        <div>Should have been: <b>${shouldHaveBeen}</b></div>
+      </div>`;
+    }
+    return `<div class="ic-step-row ${inefficient?'inefficient':''}"><span>${meta.icon} ${meta.name}</span><span><b>${actual}</b> key${actual===1?'':'s'} (optimal <b>${opt}</b>)</span></div>${detail}`;
+  }).join('');
+
+  const accuracyPct = Math.round(st.spells.length / (st.spells.length + st.mistakes) * 100);
+  const fb = document.getElementById('icFeedback');
+  fb.style.display = 'block';
+  const nextLabel = failed ? '\ud83d\udd01 Retry Chain' : 'Next Chain \u2192';
+  fb.innerHTML = `
+    <div class="qtitle ${tier}">${tierLabel}</div>
+    <div class="qrow">Accuracy: <b>${accuracyPct}%</b> (${st.mistakes} misinvoke${st.mistakes===1?'':'s'})</div>
+    <div class="qrow">Efficiency: <b>${actualTotal}</b> keys used \u2014 minimum possible <b>${optimalTotal}</b></div>
+    <div class="qrow">Speed: <b>${(timeMs/1000).toFixed(1)}s</b></div>
+    <div class="ic-step-breakdown">${rows}</div>
+    <div class="qnext"><button class="ctrl" id="icNextBtn2">${nextLabel}</button><span id="icAutoAdvanceLabel" class="os-auto-countdown"></span></div>
+  `;
+  document.getElementById('icNextBtn2').onclick = () => failed ? retryChainChallenge() : startChainChallenge();
+  document.getElementById('icAttempts').textContent = chainAttempts;
+  document.getElementById('icScore').textContent = chainClean;
+  document.getElementById('icStreak').textContent = chainStreak;
+  updateChainUI();
+  if(chainAutoAdvance) scheduleChainAutoAdvance(failed);
+}
+
+function updateChainUI(){
+  document.getElementById('icOrbChips').innerHTML = player.orbQueue.map(l => orbChipHtml(l)).join('');
+  const stepsEl = document.getElementById('icChainSteps');
+  if(!chainState){ stepsEl.innerHTML = ''; return; }
+  document.getElementById('icDesc').textContent = chainState.note;
+  stepsEl.innerHTML = chainState.spells.map((key,i) => {
+    const meta = SPELLS[key];
+    const cls = i < chainState.stepIndex ? 'done' : (i === chainState.stepIndex ? 'current' : '');
+    const step = `<div class="ic-step ${cls}"><span class="icon">${meta.icon}</span>${meta.name}</div>`;
+    return i < chainState.spells.length - 1 ? step + '<div class="ic-arrow">\u2192</div>' : step;
+  }).join('');
 }
 
 /* ---------------------------------------------------------------------
